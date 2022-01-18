@@ -1,6 +1,10 @@
 package commands
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/bwmarrin/discordgo"
+)
 
 type Helper struct {
 	Name        string
@@ -11,7 +15,7 @@ type Helper struct {
 
 var Helpers []Helper
 
-func Help() {
+func Help(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, v := range Helpers {
 		fmt.Println("Helper", v.Description)
 	}

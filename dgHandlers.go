@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+	"wiseman/commands"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -13,9 +17,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Content == "!ping" {
+	fmt.Println(Servers, m.GuildID)
+
+	// Check if prefix for this server is correct
+	if Servers[m.GuildID].GuildPrefix != m.Content[0:1] {
+		return
+	}
+
+	msg := strings.Split(m.Content[1:], " ")[0]
+
+	switch msg {
+	case "ping":
 		s.ChannelMessageSend(m.ChannelID, "Pong!")
-	} else if m.Content == "!pong" {
-		s.ChannelMessageSend(m.ChannelID, "Ping!")
+	case "help":
+		commands.Help(s, m)
 	}
 }
