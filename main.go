@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"wiseman/utils"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -19,10 +20,6 @@ import (
 
 var dg *discordgo.Session
 var mongoClient *mongo.Client
-
-const DB_NAME = "wisemanbot_server"
-const SERVERS_INFIX = "SERVERS"
-const USERS_INFIX = "USERS"
 
 type Server struct {
 	ServerId            string   `bson:"serverid"`
@@ -58,11 +55,11 @@ func init() {
 func setupDB() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	db := mongoClient.Database(DB_NAME, nil)
+	db := mongoClient.Database(utils.DB_NAME, nil)
 
 	// Swallow errors
-	db.CreateCollection(ctx, USERS_INFIX)
-	db.CreateCollection(ctx, USERS_INFIX)
+	db.CreateCollection(ctx, utils.USERS_INFIX)
+	db.CreateCollection(ctx, utils.USERS_INFIX)
 
 	return nil
 }
@@ -76,7 +73,7 @@ func initServers() error {
 	// TODO: Use InsertMany to optimize this
 	for _, guild := range guilds {
 		// Check if server is already in DB
-		res := mongoClient.Database(DB_NAME).Collection(SERVERS_INFIX).FindOne(context.TODO(), bson.M{"serverid": guild.ID})
+		res := mongoClient.Database(utils.DB_NAME).Collection(utils.SERVERS_INFIX).FindOne(context.TODO(), bson.M{"serverid": guild.ID})
 
 		if res.Err() != mongo.ErrNoDocuments {
 			var server Server
@@ -101,7 +98,7 @@ func initServers() error {
 		}
 		Servers[guild.ID] = server
 
-		mongoClient.Database(DB_NAME).Collection(SERVERS_INFIX).InsertOne(context.TODO(), server)
+		mongoClient.Database(utils.DB_NAME).Collection(utils.SERVERS_INFIX).InsertOne(context.TODO(), server)
 	}
 
 	return nil
@@ -119,7 +116,7 @@ func initUsers() error {
 		// TODO: Use InsertMany to optimize this
 		for _, member := range members {
 			// Check if server is already in DB
-			res := mongoClient.Database(DB_NAME).Collection(USERS_INFIX).FindOne(context.TODO(), bson.M{"userid": member.User.ID})
+			res := mongoClient.Database(utils.DB_NAME).Collection(utils.USERS_INFIX).FindOne(context.TODO(), bson.M{"userid": member.User.ID})
 			if res.Err() != mongo.ErrNoDocuments {
 				var user User
 				err := res.Decode(&user)
@@ -143,7 +140,7 @@ func initUsers() error {
 				LastRankTime:  0,
 			}
 
-			mongoClient.Database(DB_NAME).Collection(USERS_INFIX).InsertOne(context.TODO(), user)
+			mongoClient.Database(utils.DB_NAME).Collection(utils.USERS_INFIX).InsertOne(context.TODO(), user)
 
 			Users[member.User.ID] = user
 		}
