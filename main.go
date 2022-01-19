@@ -28,7 +28,7 @@ func main() {
 	fmt.Println("Connected to MongoDB")
 
 	// Connect to discord
-	discord, err := discord.Connect()
+	discord, err := discord.Connect(mongo)
 	if err != nil {
 		panic(err)
 	}

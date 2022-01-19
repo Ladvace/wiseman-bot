@@ -4,6 +4,7 @@ import (
 	"wiseman/internal/discord"
 
 	"github.com/bwmarrin/discordgo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -17,7 +18,7 @@ func init() {
 	discord.Commands["setPrefix"] = Setprefix
 }
 
-func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client) error {
 
 	return nil
 }

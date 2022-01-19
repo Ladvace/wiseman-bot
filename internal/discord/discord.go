@@ -4,11 +4,12 @@ import (
 	"os"
 
 	"github.com/bwmarrin/discordgo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var Client *discordgo.Session
 
-func Connect() (*discordgo.Session, error) {
+func Connect(mongo *mongo.Client) (*discordgo.Session, error) {
 	// Create a new Discord session using the provided bot token.
 	var err error
 	Client, err = discordgo.New("Bot " + os.Getenv("DISCORD_TOKEN"))
@@ -17,7 +18,9 @@ func Connect() (*discordgo.Session, error) {
 	}
 
 	// Register the messageCreate func as a callback for MessageCreate events.
-	Client.AddHandler(messageCreate)
+	Client.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		messageCreate(s, m, mongo)
+	})
 
 	// In this example, we only care about receiving message events.
 	Client.Identify.Intents = discordgo.IntentsGuildMessages
