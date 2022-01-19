@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"fmt"
+	"wiseman/internal/discord"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -15,8 +15,14 @@ type Helper struct {
 
 var Helpers []Helper
 
-func Help(s *discordgo.Session, m *discordgo.MessageCreate) {
+func init() {
+	discord.Commands["help"] = Help
+}
+
+func Help(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	for _, v := range Helpers {
-		fmt.Println("Helper", v.Description)
+		s.ChannelMessageSend(m.ChannelID, v.Name)
 	}
+
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"wiseman/internal"
+	"wiseman/internal/commands"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
 	"wiseman/internal/servers"
@@ -43,6 +44,8 @@ func main() {
 	fmt.Println("Servers hydrated")
 	users.Hydrate(discord, mongo)
 	fmt.Println("Users hydrated")
+
+	commands.Init()
 
 	// Start REST API
 	e := internal.StartEcho()
