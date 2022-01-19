@@ -31,13 +31,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 		return
 	}
 
-	msg := strings.Split(m.Content[1:], " ")[0]
+	msg := strings.Split(m.Content[1:], " ")
 
-	w := strings.Split(msg, " ")
+	command := strings.ToLower(msg[0])
 
-	command := strings.ToLower(w[0])
-
-	args := w[1:]
+	args := msg[1:]
 
 	// Check if command exists
 	if _, ok := Commands[command]; !ok {
