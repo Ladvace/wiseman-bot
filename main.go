@@ -24,6 +24,7 @@ func main() {
 		panic(err)
 	}
 	defer mongo.Disconnect(context.TODO())
+	fmt.Println("Connected to MongoDB")
 
 	// Connect to discord
 	discord, err := discord.Connect()
@@ -31,13 +32,17 @@ func main() {
 		panic(err)
 	}
 	defer discord.Close()
+	fmt.Println("Connected to Discord")
 
 	// Initialize DB and collections
 	db.SetupDB()
+	fmt.Println("DB Initialized")
 
 	// Hydrate data on cache
 	servers.Hydrate(discord, mongo)
+	fmt.Println("Servers hydrated")
 	users.Hydrate(discord, mongo)
+	fmt.Println("Users hydrated")
 
 	// Start REST API
 	e := internal.StartEcho()

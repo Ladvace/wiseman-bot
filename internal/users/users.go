@@ -46,10 +46,20 @@ func Upsert(id string, u UserType) {
 func Hydrate(d *discordgo.Session, m *mongo.Client) error {
 
 	for k, _ := range *servers.GetAll() {
+		var members []*discordgo.Member
+		var lastId string
+		for {
+			newMembers, err := d.GuildMembers(k, lastId, 1000)
+			if err != nil {
+				return err
+			}
 
-		members, err := d.GuildMembers(k, "", 10)
-		if err != nil {
-			return err
+			if len(newMembers) == 0 {
+				break
+			}
+
+			lastId = newMembers[len(newMembers)-1].User.ID
+			members = append(members, newMembers...)
 		}
 
 		// TODO: Use InsertMany to optimize this
