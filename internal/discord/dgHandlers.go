@@ -1,9 +1,9 @@
-package main
+package discord
 
 import (
-	"fmt"
 	"strings"
-	"wiseman/commands"
+	"wiseman/internal/commands"
+	"wiseman/internal/servers"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,10 +17,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	fmt.Println(Servers, m.GuildID)
-
 	// Check if prefix for this server is correct
-	if Servers[m.GuildID].GuildPrefix != m.Content[0:1] {
+	if servers.Get(m.GuildID).GuildPrefix != m.Content[0:1] {
 		return
 	}
 

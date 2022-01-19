@@ -1,4 +1,4 @@
-package utils
+package shared
 
 const (
 	DB_NAME       = "wisemanbot_server"
