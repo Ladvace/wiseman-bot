@@ -35,7 +35,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 
 	w := strings.Split(msg, " ")
 
-	command := w[0]
+	command := strings.ToLower(w[0])
 
 	args := w[1:]
 

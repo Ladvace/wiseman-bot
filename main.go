@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 	"wiseman/internal"
 	"wiseman/internal/commands"
 	"wiseman/internal/db"
@@ -40,10 +41,12 @@ func main() {
 	fmt.Println("DB Initialized")
 
 	// Hydrate data on cache
+	start := time.Now()
 	servers.Hydrate(discord, mongo)
-	fmt.Println("Servers hydrated")
+	fmt.Println("Servers hydrated in", time.Since(start))
+	start = time.Now()
 	users.Hydrate(discord, mongo)
-	fmt.Println("Users hydrated")
+	fmt.Println("Users hydrated in", time.Since(start))
 
 	commands.Init()
 
