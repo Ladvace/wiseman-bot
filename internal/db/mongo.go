@@ -35,6 +35,6 @@ func SetupDB() {
 	db := mongoClient.Database(shared.DB_NAME, nil)
 
 	// Swallow errors
-	db.CreateCollection(ctx, shared.USERS_INFIX)
+	db.CreateCollection(ctx, shared.SERVERS_INFIX)
 	db.CreateCollection(ctx, shared.USERS_INFIX)
 }
