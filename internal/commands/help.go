@@ -20,7 +20,7 @@ func init() {
 	discord.Commands["help"] = Help
 }
 
-func Help(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client) error {
+func Help(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client, args []string) error {
 	for _, v := range Helpers {
 		s.ChannelMessageSend(m.ChannelID, v.Name)
 	}

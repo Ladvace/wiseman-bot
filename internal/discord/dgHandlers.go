@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type CommandFunc func(*discordgo.Session, *discordgo.MessageCreate, *mongo.Client) error
+type CommandFunc func(*discordgo.Session, *discordgo.MessageCreate, *mongo.Client, []string) error
 
 var Commands map[string]CommandFunc
 
@@ -26,8 +26,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 		return
 	}
 
-	fmt.Println(servers.Get(m.GuildID).GuildPrefix, m.Content[0:1], Commands)
-
 	// Check if prefix for this server is correct
 	if servers.Get(m.GuildID).GuildPrefix != m.Content[0:1] {
 		return
@@ -35,12 +33,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 
 	msg := strings.Split(m.Content[1:], " ")[0]
 
+	w := strings.Split(msg, " ")
+
+	command := w[0]
+
+	args := w[1:]
+
 	// Check if command exists
-	if _, ok := Commands[msg]; !ok {
+	if _, ok := Commands[command]; !ok {
 		return
 	}
 
-	err := Commands[msg](s, m, mongo)
+	err := Commands[command](s, m, mongo, args)
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -18,7 +18,7 @@ func init() {
 	discord.Commands["setPrefix"] = Setprefix
 }
 
-func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client) error {
+func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client, args []string) error {
 
 	return nil
 }
