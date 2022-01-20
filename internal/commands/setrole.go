@@ -15,39 +15,51 @@ import (
 
 func init() {
 	Helpers = append(Helpers, Helper{
-		Name:        "setPrefix",
+		Name:        "setRole",
 		Category:    "This is a category",
 		Description: "This is a descriptio",
 		Usage:       "This is a usage",
 	})
 
-	discord.Commands["setprefix"] = Setprefix
+	discord.Commands["setrole"] = Setrole
 }
 
-func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Client, args []string) error {
-
+func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Client, args []string) error {
 	ctx := context.TODO()
 	if len(args) == 0 {
 		return nil
 	}
-	prefix := args[0]
+	level := args[0]
+	roleId := args[1]
 	collection := client.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
 	server := servers.Get(m.GuildID)
 
-	_, err := collection.UpdateOne(
+	roles, err := s.GuildRoles(m.GuildID)
+	if err != nil {
+		return nil
+	}
+
+	var roleName string
+	for _, role := range roles {
+		if role.ID == roleId {
+			roleName = role.Name
+		}
+	}
+
+	_, err = collection.UpdateOne(
 		ctx,
 		bson.M{"serverid": m.GuildID},
 		bson.D{
-			// primitive.E{Key: "$set", Value: bson.M{"guildprefix": prefix}},
-			primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "guildprefix", Value: prefix}}},
+			primitive.E{Key: "$set", Value: bson.M{fmt.Sprintf("customranks.%#v", level): roleId}},
 		},
 	)
 
-	server.GuildPrefix = prefix
+	str := string(level)
+	server.CustomRanks[str] = roleId
 	servers.Upsert(m.GuildID, server)
 
 	if err == nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Prefix set to %#v", prefix))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Role %#v set at level %#v", roleName, level))
 	}
 
 	return nil
