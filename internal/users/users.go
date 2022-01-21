@@ -79,6 +79,7 @@ func Hydrate(d *discordgo.Session, m *mongo.Client) error {
 
 			fmt.Println("User not found in DB", member.User.ID, member.User.Username+"#"+member.User.Discriminator)
 			user := UserType{
+				Name:          member.User.Username,
 				UserId:        member.User.ID,
 				Verified:      member.User.Verified,
 				Bot:           member.User.Bot,
