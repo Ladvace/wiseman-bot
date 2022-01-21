@@ -30,9 +30,9 @@ func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Cli
 		return nil
 	}
 	level := args[0]
-	roleId := args[1]
+	roleID := args[1]
 	collection := client.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
-	server := db.GetServerById(m.GuildID)
+	server := db.GetServerByID(m.GuildID)
 
 	roles, err := s.GuildRoles(m.GuildID)
 	if err != nil {
@@ -41,7 +41,7 @@ func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Cli
 
 	var roleName string
 	for _, role := range roles {
-		if role.ID == roleId {
+		if role.ID == roleID {
 			roleName = role.Name
 		}
 	}
@@ -50,13 +50,13 @@ func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Cli
 		ctx,
 		bson.M{"serverid": m.GuildID},
 		bson.D{
-			primitive.E{Key: "$set", Value: bson.M{fmt.Sprintf("customranks.%#v", level): roleId}},
+			primitive.E{Key: "$set", Value: bson.M{fmt.Sprintf("customranks.%#v", level): roleID}},
 		},
 	)
 
 	str := string(level)
-	server.CustomRanks[str] = roleId
-	db.UpsertServerById(m.GuildID, server)
+	server.CustomRanks[str] = roleID
+	db.UpsertServerByID(m.GuildID, server)
 
 	if err == nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Role %#v set at level %#v", roleName, level))

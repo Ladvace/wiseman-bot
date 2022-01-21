@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
@@ -22,6 +23,14 @@ func Connect(mongo *mongo.Client) (*discordgo.Session, error) {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	Client.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		messageCreate(s, m, mongo)
+	})
+
+	Client.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
+		fmt.Println(g.Name)
+	})
+
+	Client.AddHandler(func(s *discordgo.Session, g *discordgo.GuildDelete) {
+		fmt.Println(g.ID)
 	})
 
 	// Open a websocket connection to Discord and begin listening.

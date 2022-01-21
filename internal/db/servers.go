@@ -33,9 +33,9 @@ func init() {
 func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 	var ns int
 	var guilds []*discordgo.UserGuild
-	var lastId string
+	var lastID string
 	for {
-		newGuilds, err := d.UserGuilds(100, "", lastId)
+		newGuilds, err := d.UserGuilds(100, "", lastID)
 		if err != nil {
 			return 0, err
 		}
@@ -44,7 +44,7 @@ func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 			break
 		}
 
-		lastId = newGuilds[len(newGuilds)-1].ID
+		lastID = newGuilds[len(newGuilds)-1].ID
 		guilds = append(guilds, newGuilds...)
 	}
 
@@ -59,7 +59,7 @@ func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 			if err != nil {
 				return 0, err
 			}
-			UpsertServerById(guild.ID, server)
+			UpsertServerByID(guild.ID, server)
 			continue
 		}
 
@@ -76,7 +76,7 @@ func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 			WelcomeMessage:      "",
 			DefaultRole:         "",
 		}
-		UpsertServerById(guild.ID, server)
+		UpsertServerByID(guild.ID, server)
 
 		m.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX).InsertOne(context.TODO(), server)
 	}
@@ -84,10 +84,10 @@ func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 	return ns, nil
 }
 
-func GetServerById(serverId string) ServerType {
-	return servers[serverId]
+func GetServerByID(serverID string) ServerType {
+	return servers[serverID]
 }
 
-func UpsertServerById(serverId string, server ServerType) {
-	servers[serverId] = server
+func UpsertServerByID(serverID string, server ServerType) {
+	servers[serverID] = server
 }

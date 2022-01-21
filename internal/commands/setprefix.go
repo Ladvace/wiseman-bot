@@ -32,7 +32,7 @@ func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.C
 	}
 	prefix := args[0]
 	collection := client.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
-	server := db.GetServerById(m.GuildID)
+	server := db.GetServerByID(m.GuildID)
 
 	_, err := collection.UpdateOne(
 		ctx,
@@ -44,7 +44,7 @@ func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.C
 	)
 
 	server.ServerPrefix = prefix
-	db.UpsertServerById(m.GuildID, server)
+	db.UpsertServerByID(m.GuildID, server)
 
 	if err == nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Prefix set to %#v", prefix))

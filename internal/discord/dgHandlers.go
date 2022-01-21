@@ -27,7 +27,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 	}
 
 	// Check if prefix for this server is correct
-	if db.GetServerById(m.GuildID).ServerPrefix != m.Content[0:1] {
+	if db.GetServerByID(m.GuildID).ServerPrefix != m.Content[0:1] {
 		return
 	}
 
