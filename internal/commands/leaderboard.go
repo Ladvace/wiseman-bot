@@ -37,7 +37,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo
 	// Limit by 10 documents only
 	findOptions.SetLimit(10)
 
-	cursor, err := collection.Find(ctx, bson.D{primitive.E{Key: "serverID", Value: m.GuildID}}, findOptions)
+	cursor, err := collection.Find(ctx, bson.D{primitive.E{Key: "serverid", Value: m.GuildID}}, findOptions)
 	if err != nil {
 		return nil
 	}
