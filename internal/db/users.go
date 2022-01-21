@@ -13,7 +13,7 @@ import (
 type UserType struct {
 	ComplexID     string `bson:"complexid"`
 	serverID      string `bson:"serverid"`
-	UserId        string `bson:"userid"`
+	UserID        string `bson:"userid"`
 	Username      string `bson:"username"`
 	Discriminator string `bson:"discriminator"`
 	MessagesCount uint   `bson:"messagescount"`
@@ -70,7 +70,7 @@ func HydrateUsers(d *discordgo.Session, m *mongo.Client) (int, error) {
 
 			user := UserType{
 				ComplexID:     memberId,
-				UserId:        member.User.ID,
+				UserID:        member.User.ID,
 				serverID:      v.ServerID,
 				Username:      member.User.Username,
 				Discriminator: member.User.Discriminator,

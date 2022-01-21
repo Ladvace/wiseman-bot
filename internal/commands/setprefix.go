@@ -38,7 +38,6 @@ func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.C
 		ctx,
 		bson.M{"serverid": m.GuildID},
 		bson.D{
-			// primitive.E{Key: "$set", Value: bson.M{"guildprefix": prefix}},
 			primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "guildprefix", Value: prefix}}},
 		},
 	)
