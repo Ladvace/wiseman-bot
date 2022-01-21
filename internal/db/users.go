@@ -52,7 +52,7 @@ func HydrateUsers(d *discordgo.Session, m *mongo.Client) (int, error) {
 
 		// TODO: Use InsertMany to optimize this
 		for _, member := range members {
-			memberId := member.User.ID + "#" + member.User.Discriminator + "|" + v.ServerID
+			memberId := member.User.ID + "|" + v.ServerID
 			// Check if server is already in DB
 			res := m.Database(shared.DB_NAME).Collection(shared.USERS_INFIX).FindOne(context.TODO(), bson.M{"complexid": memberId})
 			if res.Err() != mongo.ErrNoDocuments {
