@@ -12,6 +12,7 @@ import (
 )
 
 type UserType struct {
+	Name          string `bson:"name"`
 	UserId        string `bson:"userid"`
 	MessagesCount uint   `bson:"messagescount"`
 	Rank          int    `bson:"rank"`
