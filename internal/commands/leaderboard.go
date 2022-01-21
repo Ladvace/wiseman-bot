@@ -37,7 +37,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo
 	// Limit by 10 documents only
 	findOptions.SetLimit(10)
 
-	cursor, err := collection.Find(ctx, bson.D{}, findOptions)
+	cursor, err := collection.Find(ctx, bson.D{primitive.E{Key: "serverID", Value: m.GuildID}}, findOptions)
 	if err != nil {
 		return nil
 	}
@@ -60,7 +60,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo
 
 	embed := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{},
-		Color:       9004799, // Green
+		Color:       9004799,
 		Description: "top 10 active users.",
 		Fields:      fields,
 		Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
