@@ -3,8 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+	"wiseman/internal/db"
 	"wiseman/internal/discord"
-	"wiseman/internal/servers"
 	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
@@ -32,7 +32,7 @@ func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Cli
 	level := args[0]
 	roleId := args[1]
 	collection := client.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
-	server := servers.Get(m.GuildID)
+	server := db.GetServerById(m.GuildID)
 
 	roles, err := s.GuildRoles(m.GuildID)
 	if err != nil {
@@ -56,7 +56,7 @@ func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Cli
 
 	str := string(level)
 	server.CustomRanks[str] = roleId
-	servers.Upsert(m.GuildID, server)
+	db.UpsertServerById(m.GuildID, server)
 
 	if err == nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Role %#v set at level %#v", roleName, level))

@@ -3,7 +3,7 @@ package discord
 import (
 	"fmt"
 	"strings"
-	"wiseman/internal/servers"
+	"wiseman/internal/db"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,16 +22,21 @@ func init() {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client) {
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
-	if m.Author.ID == s.State.User.ID {
+	if m.Author.ID == s.State.User.ID || len(m.Content) < 1 {
 		return
 	}
-
-	fmt.Println(m.Content)
 
 	// Check if prefix for this server is correct
-	if servers.Get(m.GuildID).GuildPrefix != m.Content[0:1] {
+	if db.GetServerById(m.GuildID).ServerPrefix != m.Content[0:1] {
 		return
 	}
+
+	role, err := s.State.Role(m.GuildID, "933696144414998568")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(role.Name)
 
 	msg := strings.Split(m.Content[1:], " ")
 
@@ -44,7 +49,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 		return
 	}
 
-	err := Commands[command](s, m, mongo, args)
+	err = Commands[command](s, m, mongo, args)
 	if err != nil {
 		fmt.Println(err)
 		return

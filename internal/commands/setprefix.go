@@ -3,8 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+	"wiseman/internal/db"
 	"wiseman/internal/discord"
-	"wiseman/internal/servers"
 	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
@@ -32,7 +32,7 @@ func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.C
 	}
 	prefix := args[0]
 	collection := client.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
-	server := servers.Get(m.GuildID)
+	server := db.GetServerById(m.GuildID)
 
 	_, err := collection.UpdateOne(
 		ctx,
@@ -43,8 +43,8 @@ func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.C
 		},
 	)
 
-	server.GuildPrefix = prefix
-	servers.Upsert(m.GuildID, server)
+	server.ServerPrefix = prefix
+	db.UpsertServerById(m.GuildID, server)
 
 	if err == nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Prefix set to %#v", prefix))

@@ -1,4 +1,4 @@
-package servers
+package db
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 )
 
 type ServerType struct {
-	ServerId            string            `bson:"serverid"`
-	GuildPrefix         string            `bson:"guildprefix"`
+	ServerID            string            `bson:"serverid"`
+	ServerPrefix        string            `bson:"guildprefix"`
 	NotificationChannel string            `bson:"notificationchannel"`
 	WelcomeChannel      string            `bson:"welcomechannel"`
 	CustomRanks         map[string]string `bson:"customranks"`
@@ -23,31 +23,21 @@ type ServerType struct {
 
 type ServersType map[string]ServerType
 
+var users UsersType
 var servers ServersType
 
 func init() {
 	servers = make(map[string]ServerType, 1000)
 }
 
-func GetAll() *ServersType {
-	return &servers
-}
-
-func Get(id string) ServerType {
-	return servers[id]
-}
-
-func Upsert(id string, u ServerType) {
-	servers[id] = u
-}
-
-func Hydrate(d *discordgo.Session, m *mongo.Client) error {
+func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
+	var ns int
 	var guilds []*discordgo.UserGuild
 	var lastId string
 	for {
 		newGuilds, err := d.UserGuilds(100, "", lastId)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		if len(newGuilds) == 0 {
@@ -67,16 +57,18 @@ func Hydrate(d *discordgo.Session, m *mongo.Client) error {
 			var server ServerType
 			err := res.Decode(&server)
 			if err != nil {
-				return err
+				return 0, err
 			}
-			Upsert(guild.ID, server)
+			UpsertServerById(guild.ID, server)
 			continue
 		}
 
 		fmt.Println("Server not found in DB", guild.ID, guild.Name)
+		ns += 1
+
 		server := ServerType{
-			ServerId:            guild.ID,
-			GuildPrefix:         "!",
+			ServerID:            guild.ID,
+			ServerPrefix:        "!",
 			NotificationChannel: "",
 			WelcomeChannel:      "",
 			CustomRanks:         map[string]string{},
@@ -84,10 +76,18 @@ func Hydrate(d *discordgo.Session, m *mongo.Client) error {
 			WelcomeMessage:      "",
 			DefaultRole:         "",
 		}
-		Upsert(guild.ID, server)
+		UpsertServerById(guild.ID, server)
 
 		m.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX).InsertOne(context.TODO(), server)
 	}
 
-	return nil
+	return ns, nil
+}
+
+func GetServerById(serverId string) ServerType {
+	return servers[serverId]
+}
+
+func UpsertServerById(serverId string, server ServerType) {
+	servers[serverId] = server
 }

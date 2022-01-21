@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"wiseman/internal/db"
 	"wiseman/internal/discord"
 	"wiseman/internal/shared"
-	"wiseman/internal/users"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -42,7 +42,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo
 		return nil
 	}
 
-	var leaderboard users.UserType
+	var leaderboard db.UserType
 	var fields []*discordgo.MessageEmbedField
 
 	for cursor.Next(ctx) {
@@ -51,7 +51,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo
 			return nil
 		} else {
 			fields = append(fields, &discordgo.MessageEmbedField{
-				Name:  string(leaderboard.Name),
+				Name:  string(leaderboard.Username),
 				Value: fmt.Sprint(leaderboard.Rank),
 			})
 

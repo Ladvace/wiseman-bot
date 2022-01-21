@@ -8,8 +8,6 @@ import (
 	"wiseman/internal/commands"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
-	"wiseman/internal/servers"
-	"wiseman/internal/users"
 
 	"github.com/joho/godotenv"
 )
@@ -42,11 +40,11 @@ func main() {
 
 	// Hydrate data on cache
 	start := time.Now()
-	servers.Hydrate(discord, mongo)
-	fmt.Println("Servers hydrated in", time.Since(start))
+	ns, err := db.HydrateServers(discord, mongo)
+	fmt.Println(ns, "Servers hydrated in", time.Since(start))
 	start = time.Now()
-	users.Hydrate(discord, mongo)
-	fmt.Println("Users hydrated in", time.Since(start))
+	nu, err := db.HydrateUsers(discord, mongo)
+	fmt.Println(nu, "Users hydrated in", time.Since(start))
 
 	commands.Init()
 

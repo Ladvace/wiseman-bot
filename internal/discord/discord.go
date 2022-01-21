@@ -17,13 +17,12 @@ func Connect(mongo *mongo.Client) (*discordgo.Session, error) {
 		return nil, err
 	}
 
+	Client.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
+
 	// Register the messageCreate func as a callback for MessageCreate events.
 	Client.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		messageCreate(s, m, mongo)
 	})
-
-	// In this example, we only care about receiving message events.
-	Client.Identify.Intents = discordgo.IntentsGuildMessages
 
 	// Open a websocket connection to Discord and begin listening.
 	err = Client.Open()
