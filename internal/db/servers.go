@@ -23,8 +23,9 @@ type ServerType struct {
 
 type ServersType map[string]ServerType
 
-var users UsersType
 var servers ServersType
+
+var SERVERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
 
 func init() {
 	servers = make(map[string]ServerType, 1000)

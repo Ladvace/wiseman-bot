@@ -6,10 +6,9 @@ import (
 	"wiseman/internal/db"
 
 	"github.com/bwmarrin/discordgo"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type CommandFunc func(*discordgo.Session, *discordgo.MessageCreate, *mongo.Client, []string) error
+type CommandFunc func(*discordgo.Session, *discordgo.MessageCreate, []string) error
 
 var Commands map[string]CommandFunc
 
@@ -19,7 +18,7 @@ func init() {
 
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the authenticated bot has access to.
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client) {
+func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
 	if m.Author.ID == s.State.User.ID || len(m.Content) < 1 {
@@ -30,13 +29,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 	if db.GetServerByID(m.GuildID).ServerPrefix != m.Content[0:1] {
 		return
 	}
-
-	role, err := s.State.Role(m.GuildID, "933696144414998568")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(role.Name)
 
 	msg := strings.Split(m.Content[1:], " ")
 
@@ -49,9 +41,25 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mong
 		return
 	}
 
-	err = Commands[command](s, m, mongo, args)
+	err := Commands[command](s, m, args)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+}
+
+func memberAdd(s *discordgo.Session, u *discordgo.GuildMemberAdd) {
+	fmt.Println("New Member", u.User.Username)
+}
+
+func memberRemove(s *discordgo.Session, u *discordgo.GuildMemberRemove) {
+	fmt.Println("Member Removed", u.User.Username)
+}
+
+func serverAdd(s *discordgo.Session, g *discordgo.GuildCreate) {
+	fmt.Println("New Server", g.Name)
+}
+
+func serverRemove(s *discordgo.Session, g *discordgo.GuildDelete) {
+	fmt.Println("Server Removed", g.ID)
 }

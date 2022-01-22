@@ -27,6 +27,10 @@ type UserType struct {
 
 type UsersType map[string]UserType
 
+var users UsersType
+
+var USERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.USERS_INFIX)
+
 func init() {
 	users = make(map[string]UserType, 50000)
 }

@@ -6,12 +6,10 @@ import (
 	"time"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
-	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -26,10 +24,10 @@ func init() {
 	discord.Commands["leaderboard"] = Leaderboard
 }
 
-func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Client, args []string) error {
+func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 
 	ctx := context.TODO()
-	collection := client.Database(shared.DB_NAME).Collection(shared.USERS_INFIX)
+	collection := db.USERS_DB
 
 	findOptions := options.Find()
 	// Sort by `rank` field descending

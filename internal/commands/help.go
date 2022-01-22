@@ -4,7 +4,6 @@ import (
 	"wiseman/internal/discord"
 
 	"github.com/bwmarrin/discordgo"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Helper struct {
@@ -20,7 +19,7 @@ func init() {
 	discord.Commands["help"] = Help
 }
 
-func Help(s *discordgo.Session, m *discordgo.MessageCreate, mongo *mongo.Client, args []string) error {
+func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 	for _, v := range Helpers {
 		s.ChannelMessageSend(m.ChannelID, v.Name)
 	}

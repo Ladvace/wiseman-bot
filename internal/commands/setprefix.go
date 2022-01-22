@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
-	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -24,14 +22,14 @@ func init() {
 	discord.Commands["setprefix"] = Setprefix
 }
 
-func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, client *mongo.Client, args []string) error {
+func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 
 	ctx := context.TODO()
 	if len(args) == 0 {
 		return nil
 	}
 	prefix := args[0]
-	collection := client.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
+	collection := db.SERVERS_DB
 	server := db.GetServerByID(m.GuildID)
 
 	_, err := collection.UpdateOne(

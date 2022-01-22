@@ -1,43 +1,51 @@
 package discord
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var Client *discordgo.Session
+var client *discordgo.Session
 
-func Connect(mongo *mongo.Client) (*discordgo.Session, error) {
+func Connect() (*discordgo.Session, error) {
 	// Create a new Discord session using the provided bot token.
 	var err error
-	Client, err = discordgo.New("Bot " + os.Getenv("DISCORD_TOKEN"))
+	client, err = discordgo.New("Bot " + os.Getenv("DISCORD_TOKEN"))
 	if err != nil {
 		return nil, err
 	}
 
-	Client.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
-
-	// Register the messageCreate func as a callback for MessageCreate events.
-	Client.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		messageCreate(s, m, mongo)
-	})
-
-	Client.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
-		fmt.Println(g.Name)
-	})
-
-	Client.AddHandler(func(s *discordgo.Session, g *discordgo.GuildDelete) {
-		fmt.Println(g.ID)
-	})
+	client.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 
 	// Open a websocket connection to Discord and begin listening.
-	err = Client.Open()
+	err = client.Open()
 	if err != nil {
 		return nil, err
 	}
 
-	return Client, nil
+	return client, nil
+}
+
+func StartHandlers() {
+	// Register the messageCreate func as a callback for MessageCreate events.
+	client.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		messageCreate(s, m)
+	})
+
+	client.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
+		serverAdd(s, g)
+	})
+
+	client.AddHandler(func(s *discordgo.Session, g *discordgo.GuildDelete) {
+		serverRemove(s, g)
+	})
+
+	client.AddHandler(func(s *discordgo.Session, u *discordgo.GuildMemberAdd) {
+		memberAdd(s, u)
+	})
+
+	client.AddHandler(func(s *discordgo.Session, u *discordgo.GuildMemberRemove) {
+		memberRemove(s, u)
+	})
 }

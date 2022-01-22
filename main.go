@@ -27,11 +27,11 @@ func main() {
 	fmt.Println("Connected to MongoDB")
 
 	// Connect to discord
-	discord, err := discord.Connect(mongo)
+	d, err := discord.Connect()
 	if err != nil {
 		panic(err)
 	}
-	defer discord.Close()
+	defer d.Close()
 	fmt.Println("Connected to Discord")
 
 	// Initialize DB and collections
@@ -40,11 +40,13 @@ func main() {
 
 	// Hydrate data on cache
 	start := time.Now()
-	ns, err := db.HydrateServers(discord, mongo)
+	ns, err := db.HydrateServers(d, mongo)
 	fmt.Println(ns, "Servers hydrated in", time.Since(start))
 	start = time.Now()
-	nu, err := db.HydrateUsers(discord, mongo)
+	nu, err := db.HydrateUsers(d, mongo)
 	fmt.Println(nu, "Users hydrated in", time.Since(start))
+
+	discord.StartHandlers()
 
 	commands.Init()
 
