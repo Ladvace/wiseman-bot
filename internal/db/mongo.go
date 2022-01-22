@@ -20,6 +20,9 @@ func Connect() (*mongo.Client, error) {
 		return nil, err
 	}
 
+	SERVERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
+	USERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.USERS_INFIX)
+
 	err = mongoClient.Ping(context.TODO(), nil)
 
 	if err != nil {

@@ -26,6 +26,10 @@ func main() {
 	defer mongo.Disconnect(context.TODO())
 	fmt.Println("Connected to MongoDB")
 
+	// Initialize DB and collections
+	db.SetupDB()
+	fmt.Println("DB Initialized")
+
 	// Connect to discord
 	d, err := discord.Connect()
 	if err != nil {
@@ -34,16 +38,12 @@ func main() {
 	defer d.Close()
 	fmt.Println("Connected to Discord")
 
-	// Initialize DB and collections
-	db.SetupDB()
-	fmt.Println("DB Initialized")
-
 	// Hydrate data on cache
 	start := time.Now()
-	ns, err := db.HydrateServers(d, mongo)
+	ns, err := db.HydrateServers(d)
 	fmt.Println(ns, "Servers hydrated in", time.Since(start))
 	start = time.Now()
-	nu, err := db.HydrateUsers(d, mongo)
+	nu, err := db.HydrateUsers(d)
 	fmt.Println(nu, "Users hydrated in", time.Since(start))
 
 	discord.StartHandlers()

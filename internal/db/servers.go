@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,13 +24,13 @@ type ServersType map[string]ServerType
 
 var servers ServersType
 
-var SERVERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX)
+var SERVERS_DB *mongo.Collection
 
 func init() {
 	servers = make(map[string]ServerType, 1000)
 }
 
-func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
+func HydrateServers(d *discordgo.Session) (int, error) {
 	var ns int
 	var guilds []*discordgo.UserGuild
 	var lastID string
@@ -52,7 +51,7 @@ func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 	// TODO: Use InsertMany to optimize this
 	for _, guild := range guilds {
 		// Check if server is already in DB
-		res := m.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX).FindOne(context.TODO(), bson.M{"serverid": guild.ID})
+		res := SERVERS_DB.FindOne(context.TODO(), bson.M{"serverid": guild.ID})
 
 		if res.Err() != mongo.ErrNoDocuments {
 			var server ServerType
@@ -79,7 +78,7 @@ func HydrateServers(d *discordgo.Session, m *mongo.Client) (int, error) {
 		}
 		UpsertServerByID(guild.ID, server)
 
-		m.Database(shared.DB_NAME).Collection(shared.SERVERS_INFIX).InsertOne(context.TODO(), server)
+		SERVERS_DB.InsertOne(context.TODO(), server)
 	}
 
 	return ns, nil

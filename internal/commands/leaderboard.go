@@ -41,6 +41,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 	}
 
 	var leaderboard db.UserType
+	leaderboardUser, _ := discord.RetrieveUser(leaderboard.UserID, m.GuildID)
 	var fields []*discordgo.MessageEmbedField
 
 	for cursor.Next(ctx) {
@@ -49,7 +50,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 			return nil
 		} else {
 			fields = append(fields, &discordgo.MessageEmbedField{
-				Name:  string(leaderboard.Username),
+				Name:  string(leaderboardUser.Username),
 				Value: fmt.Sprint(leaderboard.Rank),
 			})
 

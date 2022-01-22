@@ -41,11 +41,15 @@ func StartHandlers() {
 		serverRemove(s, g)
 	})
 
-	client.AddHandler(func(s *discordgo.Session, u *discordgo.GuildMemberAdd) {
-		memberAdd(s, u)
+	client.AddHandler(func(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+		memberAdd(s, m)
 	})
 
-	client.AddHandler(func(s *discordgo.Session, u *discordgo.GuildMemberRemove) {
-		memberRemove(s, u)
+	client.AddHandler(func(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+		memberRemove(s, m)
+	})
+
+	client.AddHandler(func(s *discordgo.Session, m *discordgo.GuildMemberUpdate) {
+		memberUpdate(s, m)
 	})
 }

@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,8 +13,6 @@ type UserType struct {
 	ComplexID      string `bson:"complexid"`
 	ServerID       string `bson:"serverid"`
 	UserID         string `bson:"userid"`
-	Username       string `bson:"username"`
-	Discriminator  string `bson:"discriminator"`
 	MessagesCount  uint   `bson:"messagescount"`
 	Rank           int    `bson:"rank"`
 	Time           uint   `bson:"time"`
@@ -29,13 +26,13 @@ type UsersType map[string]UserType
 
 var users UsersType
 
-var USERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.USERS_INFIX)
+var USERS_DB *mongo.Collection
 
 func init() {
 	users = make(map[string]UserType, 50000)
 }
 
-func HydrateUsers(d *discordgo.Session, m *mongo.Client) (int, error) {
+func HydrateUsers(d *discordgo.Session) (int, error) {
 	var nu int
 	for _, v := range servers {
 		var members []*discordgo.Member
@@ -58,7 +55,7 @@ func HydrateUsers(d *discordgo.Session, m *mongo.Client) (int, error) {
 		for _, member := range members {
 			memberID := member.User.ID + "|" + v.ServerID
 			// Check if server is already in DB
-			res := m.Database(shared.DB_NAME).Collection(shared.USERS_INFIX).FindOne(context.TODO(), bson.M{"complexid": memberID})
+			res := USERS_DB.FindOne(context.TODO(), bson.M{"complexid": memberID})
 			if res.Err() != mongo.ErrNoDocuments {
 				var user UserType
 				err := res.Decode(&user)
@@ -76,8 +73,6 @@ func HydrateUsers(d *discordgo.Session, m *mongo.Client) (int, error) {
 				ComplexID:      memberID,
 				UserID:         member.User.ID,
 				ServerID:       v.ServerID,
-				Username:       member.User.Username,
-				Discriminator:  member.User.Discriminator,
 				Verified:       member.User.Verified,
 				Bot:            member.User.Bot,
 				MessagesCount:  0,
@@ -87,7 +82,7 @@ func HydrateUsers(d *discordgo.Session, m *mongo.Client) (int, error) {
 				LastTimeOnline: 0,
 			}
 
-			m.Database(shared.DB_NAME).Collection(shared.USERS_INFIX).InsertOne(context.TODO(), user)
+			USERS_DB.InsertOne(context.TODO(), user)
 			UpsertUserByID(memberID, user)
 		}
 	}

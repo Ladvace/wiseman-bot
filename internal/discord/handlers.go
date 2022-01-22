@@ -56,6 +56,10 @@ func memberRemove(s *discordgo.Session, u *discordgo.GuildMemberRemove) {
 	fmt.Println("Member Removed", u.User.Username)
 }
 
+func memberUpdate(s *discordgo.Session, m *discordgo.GuildMemberUpdate) {
+	fmt.Println("Member Updated", m.User.Username)
+}
+
 func serverAdd(s *discordgo.Session, g *discordgo.GuildCreate) {
 	fmt.Println("New Server", g.Name)
 }
