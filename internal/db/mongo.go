@@ -31,13 +31,3 @@ func Connect() (*mongo.Client, error) {
 
 	return mongoClient, nil
 }
-
-func SetupDB() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	db := mongoClient.Database(shared.DB_NAME, nil)
-
-	// Swallow errors
-	db.CreateCollection(ctx, shared.SERVERS_INFIX)
-	db.CreateCollection(ctx, shared.USERS_INFIX)
-}

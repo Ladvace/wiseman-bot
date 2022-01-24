@@ -52,8 +52,8 @@ func Setrole(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 		},
 	)
 
-	str := string(level)
-	server.CustomRanks[str] = roleID
+	// str := string(level)
+	// server.CustomRanks[str] = roleID
 	db.UpsertServerByID(m.GuildID, server)
 
 	if err == nil {

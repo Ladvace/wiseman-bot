@@ -3,6 +3,7 @@ package discord
 import (
 	"fmt"
 	"strings"
+	"time"
 	"wiseman/internal/db"
 
 	"github.com/bwmarrin/discordgo"
@@ -12,8 +13,11 @@ type CommandFunc func(*discordgo.Session, *discordgo.MessageCreate, []string) er
 
 var Commands map[string]CommandFunc
 
+var joinTimestamps map[string]int64
+
 func init() {
 	Commands = make(map[string]CommandFunc, 200)
+	joinTimestamps = make(map[string]int64, 1000)
 }
 
 // This function will be called (due to AddHandler above) every time a new
@@ -24,6 +28,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID || len(m.Content) < 1 {
 		return
 	}
+
+	fmt.Println("Message:", m.Content)
+
+	u := db.GetUserByID(m.Author.ID, m.GuildID)
+	u.IncreaseExperience(10)
+	fmt.Println("After Message:", m.Content)
 
 	// Check if prefix for this server is correct
 	if db.GetServerByID(m.GuildID).ServerPrefix != m.Content[0:1] {
@@ -66,4 +76,28 @@ func serverAdd(s *discordgo.Session, g *discordgo.GuildCreate) {
 
 func serverRemove(s *discordgo.Session, g *discordgo.GuildDelete) {
 	fmt.Println("Server Removed", g.ID)
+}
+
+// Being multiple people in a channel gives you more points
+// Muting yourself gives you less points
+// If you never talk you get less points
+func voiceStateChange(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
+	if c.BeforeUpdate != nil {
+		evStr := fmt.Sprintf("%s %s %s", c.GuildID, c.BeforeUpdate.ChannelID, c.UserID)
+		_, ok := joinTimestamps[evStr]
+		if !ok {
+			return
+		}
+		timeDiff := time.Now().Unix() - joinTimestamps[evStr]
+		// Leave
+		fmt.Println("Left after", timeDiff, "seconds")
+		delete(joinTimestamps, evStr)
+		u := db.GetUserByID(c.UserID, c.GuildID)
+		u.IncreaseExperience(uint(timeDiff) * 2)
+	} else {
+		evStr := fmt.Sprintf("%s %s %s", c.GuildID, c.ChannelID, c.UserID)
+		// Join
+		fmt.Println("Joined")
+		joinTimestamps[evStr] = time.Now().Unix()
+	}
 }

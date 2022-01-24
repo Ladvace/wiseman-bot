@@ -3,26 +3,72 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserType struct {
-	ComplexID      string `bson:"complexid"`
-	ServerID       string `bson:"serverid"`
-	UserID         string `bson:"userid"`
-	MessagesCount  uint   `bson:"messagescount"`
-	Rank           int    `bson:"rank"`
-	Time           uint   `bson:"time"`
-	Experience     uint   `bson:"experience"`
-	LastTimeOnline uint64 `bson:"lastranktime"`
-	Bot            bool   `bson:"bot"`
-	Verified       bool   `bson:"verified"`
+	ComplexID              string `bson:"complexid"`
+	ServerID               string `bson:"serverid"`
+	UserID                 string `bson:"userid"`
+	MessagesCount          uint   `bson:"messagescount"`
+	CurrentLevelExperience uint   `bson:"currentlevelexperience"`
+	CurrentLevel           uint   `bson:"currentlevel"`
+	LastTimeOnline         uint64 `bson:"lastranktime"`
+	Bot                    bool   `bson:"bot"`
+	Verified               bool   `bson:"verified"`
 }
 
 type UsersType map[string]UserType
+
+func (u UserType) GetNextLevelMinExperience() uint {
+	user := users[u.ComplexID]
+	fLevel := float64(user.CurrentLevel + 1)
+
+	return uint(50 * (math.Pow(fLevel, 3) - 6*math.Pow(fLevel, 2) + 17*fLevel - 12) / 3)
+}
+
+func (u UserType) IncreaseExperience(v uint) uint {
+	// Get original object using ComplexID to avoid injecting other mutated data
+	user := users[u.ComplexID]
+
+	for {
+		if user.CurrentLevelExperience+v < user.GetNextLevelMinExperience() {
+			user.CurrentLevelExperience += v
+			UpsertUserByID(u.ComplexID, user)
+			break
+		}
+
+		v -= user.GetNextLevelMinExperience() - user.CurrentLevelExperience
+		user.CurrentLevelExperience = 0
+		user.CurrentLevel += 1
+		UpsertUserByID(u.ComplexID, user)
+	}
+
+	r, _ := USERS_DB.UpdateOne(context.TODO(),
+		bson.M{
+			"complexid": u.ComplexID,
+		},
+		bson.D{
+			primitive.E{Key: "$set", Value: bson.D{
+				primitive.E{
+					Key: "currentlevel", Value: user.CurrentLevel,
+				},
+				primitive.E{
+					Key: "currentlevelexperience", Value: user.CurrentLevelExperience,
+				},
+			}},
+		},
+	)
+
+	fmt.Printf("%+v\n", r)
+
+	return u.CurrentLevelExperience
+}
 
 var users UsersType
 
@@ -62,6 +108,7 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 				if err != nil {
 					return 0, err
 				}
+
 				UpsertUserByID(memberID, user)
 				continue
 			}
@@ -70,16 +117,15 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 			nu += 1
 
 			user := UserType{
-				ComplexID:      memberID,
-				UserID:         member.User.ID,
-				ServerID:       v.ServerID,
-				Verified:       member.User.Verified,
-				Bot:            member.User.Bot,
-				MessagesCount:  0,
-				Rank:           0,
-				Time:           0,
-				Experience:     0,
-				LastTimeOnline: 0,
+				ComplexID:              memberID,
+				UserID:                 member.User.ID,
+				ServerID:               v.ServerID,
+				Verified:               member.User.Verified,
+				Bot:                    member.User.Bot,
+				MessagesCount:          0,
+				CurrentLevelExperience: 0,
+				CurrentLevel:           1,
+				LastTimeOnline:         0,
 			}
 
 			USERS_DB.InsertOne(context.TODO(), user)
@@ -90,8 +136,8 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 	return nu, nil
 }
 
-func GetUserByID(userID string) UserType {
-	return users[userID]
+func GetUserByID(userID, guildID string) UserType {
+	return users[userID+"|"+guildID]
 }
 
 func UpsertUserByID(userID string, user UserType) {

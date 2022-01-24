@@ -26,10 +26,6 @@ func main() {
 	defer mongo.Disconnect(context.TODO())
 	fmt.Println("Connected to MongoDB")
 
-	// Initialize DB and collections
-	db.SetupDB()
-	fmt.Println("DB Initialized")
-
 	// Connect to discord
 	d, err := discord.Connect()
 	if err != nil {

@@ -52,4 +52,8 @@ func StartHandlers() {
 	client.AddHandler(func(s *discordgo.Session, m *discordgo.GuildMemberUpdate) {
 		memberUpdate(s, m)
 	})
+
+	client.AddHandler(func(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
+		voiceStateChange(s, c)
+	})
 }

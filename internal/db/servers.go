@@ -3,21 +3,27 @@ package db
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type RankType struct {
+	RankName     string `bson:"rankname"`
+	RankMinLevel uint   `bson:"rankminlevel"`
+}
+
 type ServerType struct {
-	ServerID            string            `bson:"serverid"`
-	ServerPrefix        string            `bson:"guildprefix"`
-	NotificationChannel string            `bson:"notificationchannel"`
-	WelcomeChannel      string            `bson:"welcomechannel"`
-	CustomRanks         map[string]string `bson:"customranks"`
-	RankTime            int               `bson:"ranktime"`
-	WelcomeMessage      string            `bson:"welcomemessage"`
-	DefaultRole         string            `bson:"defaultrole"`
+	ServerID            string     `bson:"serverid"`
+	ServerPrefix        string     `bson:"guildprefix"`
+	NotificationChannel string     `bson:"notificationchannel"`
+	WelcomeChannel      string     `bson:"welcomechannel"`
+	CustomRanks         []RankType `bson:"customranks"`
+	RankTime            int        `bson:"ranktime"`
+	WelcomeMessage      string     `bson:"welcomemessage"`
+	DefaultRole         string     `bson:"defaultrole"`
 }
 
 type ServersType map[string]ServerType
@@ -28,6 +34,19 @@ var SERVERS_DB *mongo.Collection
 
 func init() {
 	servers = make(map[string]ServerType, 1000)
+}
+
+func (s ServerType) GetRankRoleByLevel(level uint) RankType {
+	for _, v := range s.CustomRanks {
+		if level >= v.RankMinLevel {
+			return v
+		}
+	}
+
+	return RankType{
+		RankName:     "",
+		RankMinLevel: 0,
+	}
 }
 
 func HydrateServers(d *discordgo.Session) (int, error) {
@@ -59,6 +78,12 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 			if err != nil {
 				return 0, err
 			}
+
+			// TODO: FIX
+			sort.SliceStable(server.CustomRanks, func(i, j int) bool {
+				return server.CustomRanks[i].RankMinLevel > server.CustomRanks[j].RankMinLevel
+			})
+
 			UpsertServerByID(guild.ID, server)
 			continue
 		}
@@ -71,7 +96,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 			ServerPrefix:        "!",
 			NotificationChannel: "",
 			WelcomeChannel:      "",
-			CustomRanks:         map[string]string{},
+			CustomRanks:         []RankType{},
 			RankTime:            0,
 			WelcomeMessage:      "",
 			DefaultRole:         "",

@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
@@ -24,6 +25,11 @@ func init() {
 	discord.Commands["leaderboard"] = Leaderboard
 }
 
+type LeaderboardPlace struct {
+	Level uint
+	Field *discordgo.MessageEmbedField
+}
+
 func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 
 	ctx := context.TODO()
@@ -37,35 +43,55 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 
 	cursor, err := collection.Find(ctx, bson.D{primitive.E{Key: "serverid", Value: m.GuildID}}, findOptions)
 	if err != nil {
-		return nil
+		return err
 	}
 
-	var leaderboard db.UserType
-	leaderboardUser, _ := discord.RetrieveUser(leaderboard.UserID, m.GuildID)
-	var fields []*discordgo.MessageEmbedField
+	var fields []LeaderboardPlace
 
 	for cursor.Next(ctx) {
+		var leaderboard db.UserType
 		err := cursor.Decode(&leaderboard)
 		if err != nil {
-			return nil
-		} else {
-			fields = append(fields, &discordgo.MessageEmbedField{
-				Name:  string(leaderboardUser.Username),
-				Value: fmt.Sprint(leaderboard.Rank),
-			})
-
+			return err
 		}
+
+		leaderboardUser, err := discord.RetrieveUser(leaderboard.UserID, m.GuildID)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		fields = append(fields, LeaderboardPlace{
+			Level: leaderboard.CurrentLevel,
+			Field: &discordgo.MessageEmbedField{
+				Name:  string(leaderboardUser.Username),
+				Value: fmt.Sprint("Level ", leaderboard.CurrentLevel),
+			}},
+		)
+	}
+
+	sort.Slice(fields, func(i, j int) bool {
+		return fields[i].Level > fields[j].Level
+	})
+
+	finalFields := make([]*discordgo.MessageEmbedField, 0)
+
+	for _, v := range fields {
+		finalFields = append(finalFields, v.Field)
 	}
 
 	embed := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{},
 		Color:       9004799,
 		Description: "top 10 active users.",
-		Fields:      fields,
+		Fields:      finalFields,
 		Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
 		Title:       "Leaderboard",
 	}
 
-	s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return nil
 }
