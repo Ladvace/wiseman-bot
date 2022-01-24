@@ -22,6 +22,8 @@ type ServerType struct {
 	WelcomeChannel      string     `bson:"welcomechannel"`
 	CustomRanks         []RankType `bson:"customranks"`
 	RankTime            int        `bson:"ranktime"`
+	MsgExpMultiplier    float64    `bson:"msgexpmultiplier"`
+	TimeExpMultiplier   float64    `bson:"timeexpmultiplier"`
 	WelcomeMessage      string     `bson:"welcomemessage"`
 	DefaultRole         string     `bson:"defaultrole"`
 }
@@ -98,6 +100,8 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 			WelcomeChannel:      "",
 			CustomRanks:         []RankType{},
 			RankTime:            0,
+			MsgExpMultiplier:    1.00,
+			TimeExpMultiplier:   1.00,
 			WelcomeMessage:      "",
 			DefaultRole:         "",
 		}
