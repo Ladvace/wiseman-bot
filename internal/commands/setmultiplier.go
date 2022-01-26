@@ -55,6 +55,11 @@ func Setmultiplier(s *discordgo.Session, m *discordgo.MessageCreate, args []stri
 				s.ChannelMessageSend(m.ChannelID, "Error while setting the time multiplier")
 				return nil
 			}
+
+			server := db.GetServerByID(m.GuildID)
+			server.TimeExpMultiplier = parsedMultiplied
+			db.UpsertServerByID(m.GuildID, server)
+
 			s.ChannelMessageSend(m.ChannelID, "Multiplier updated successfully!")
 		}
 	case "msg":
@@ -70,6 +75,11 @@ func Setmultiplier(s *discordgo.Session, m *discordgo.MessageCreate, args []stri
 				s.ChannelMessageSend(m.ChannelID, "Error while setting the message multiplier")
 				return nil
 			}
+
+			server := db.GetServerByID(m.GuildID)
+			server.MsgExpMultiplier = parsedMultiplied
+			db.UpsertServerByID(m.GuildID, server)
+
 			s.ChannelMessageSend(m.ChannelID, "Multiplier updated successfully!")
 		}
 	default:

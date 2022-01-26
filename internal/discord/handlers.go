@@ -29,12 +29,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	server := db.GetServerByID(m.GuildID)
-
 	fmt.Println("Message:", m.Content)
 
 	u := db.GetUserByID(m.Author.ID, m.GuildID)
-	u.IncreaseExperience(10, uint(server.MsgExpMultiplier))
+	u.IncreaseExperience(10, m.GuildID)
 	fmt.Println("After Message:", m.Content)
 
 	// Check if prefix for this server is correct
@@ -85,8 +83,6 @@ func serverRemove(s *discordgo.Session, g *discordgo.GuildDelete) {
 // If you never talk you get less points
 func voiceStateChange(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
 	if c.BeforeUpdate != nil {
-		server := db.GetServerByID(c.GuildID)
-
 		evStr := fmt.Sprintf("%s %s %s", c.GuildID, c.BeforeUpdate.ChannelID, c.UserID)
 		_, ok := joinTimestamps[evStr]
 		if !ok {
@@ -97,7 +93,7 @@ func voiceStateChange(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
 		fmt.Println("Left after", timeDiff, "seconds")
 		delete(joinTimestamps, evStr)
 		u := db.GetUserByID(c.UserID, c.GuildID)
-		u.IncreaseExperience(uint(timeDiff)*2, uint(server.TimeExpMultiplier))
+		u.IncreaseExperience(uint(timeDiff)*2, c.GuildID)
 	} else {
 		evStr := fmt.Sprintf("%s %s %s", c.GuildID, c.ChannelID, c.UserID)
 		// Join

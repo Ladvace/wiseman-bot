@@ -32,13 +32,14 @@ func (u UserType) GetNextLevelMinExperience() uint {
 	return uint(50 * (math.Pow(fLevel, 3) - 6*math.Pow(fLevel, 2) + 17*fLevel - 12) / 3)
 }
 
-func (u UserType) IncreaseExperience(v uint, multiplier uint) uint {
+func (u UserType) IncreaseExperience(v uint, guildID string) uint {
 	// Get original object using ComplexID to avoid injecting other mutated data
 	user := users[u.ComplexID]
+	server := servers[guildID]
 
 	for {
 		if user.CurrentLevelExperience+v < user.GetNextLevelMinExperience() {
-			user.CurrentLevelExperience += v * multiplier
+			user.CurrentLevelExperience += v * uint(server.MsgExpMultiplier)
 			UpsertUserByID(u.ComplexID, user)
 			break
 		}

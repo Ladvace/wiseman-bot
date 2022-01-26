@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"sort"
 	"time"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
@@ -36,8 +35,8 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 	collection := db.USERS_DB
 
 	findOptions := options.Find()
-	// Sort by `rank` field descending
-	findOptions.SetSort(bson.D{primitive.E{Key: "rank", Value: -1}})
+	// Sort by `currentlevel` field descending
+	findOptions.SetSort(bson.D{primitive.E{Key: "currentlevel", Value: -1}})
 	// Limit by 10 documents only
 	findOptions.SetLimit(10)
 
@@ -69,10 +68,6 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 			}},
 		)
 	}
-
-	sort.Slice(fields, func(i, j int) bool {
-		return fields[i].Level > fields[j].Level
-	})
 
 	finalFields := make([]*discordgo.MessageEmbedField, 0)
 
