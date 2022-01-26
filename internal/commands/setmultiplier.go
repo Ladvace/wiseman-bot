@@ -68,7 +68,7 @@ func Setmultiplier(s *discordgo.Session, m *discordgo.MessageCreate, args []stri
 				ctx,
 				bson.M{"serverid": m.GuildID},
 				bson.D{
-					primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "msgxpmultiplier", Value: multiplier}}},
+					primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "msgexpmultiplier", Value: parsedMultiplied}}},
 				},
 			)
 			if err != nil {

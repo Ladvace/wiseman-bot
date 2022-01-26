@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/r3labs/diff/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -40,33 +42,15 @@ func (u UserType) IncreaseExperience(v uint, guildID string) uint {
 	for {
 		if user.CurrentLevelExperience+v < user.GetNextLevelMinExperience() {
 			user.CurrentLevelExperience += v * uint(server.MsgExpMultiplier)
-			UpsertUserByID(u.ComplexID, user)
 			break
 		}
 
 		v -= user.GetNextLevelMinExperience() - user.CurrentLevelExperience
 		user.CurrentLevelExperience = 0
 		user.CurrentLevel += 1
-		UpsertUserByID(u.ComplexID, user)
 	}
 
-	r, _ := USERS_DB.UpdateOne(context.TODO(),
-		bson.M{
-			"complexid": u.ComplexID,
-		},
-		bson.D{
-			primitive.E{Key: "$set", Value: bson.D{
-				primitive.E{
-					Key: "currentlevel", Value: user.CurrentLevel,
-				},
-				primitive.E{
-					Key: "currentlevelexperience", Value: user.CurrentLevelExperience,
-				},
-			}},
-		},
-	)
-
-	fmt.Printf("%+v\n", r)
+	UpsertUserByID(u.ComplexID, user)
 
 	return u.CurrentLevelExperience
 }
@@ -142,5 +126,41 @@ func GetUserByID(userID, guildID string) UserType {
 }
 
 func UpsertUserByID(userID string, user UserType) {
+	if Hydrated {
+		d, err := diff.NewDiffer(diff.TagName("bson"))
+		if err != nil {
+			panic(err)
+		}
+		changelog, err := d.Diff(users[userID], user)
+		if err != nil {
+			panic(err)
+		}
+		if len(changelog) == 0 {
+			return
+		}
+
+		changes := bson.D{}
+		for _, v := range changelog {
+			changes = append(changes, primitive.E{
+				Key: "$set",
+				Value: bson.D{
+					primitive.E{
+						Key:   strings.Join(v.Path, "."),
+						Value: v.To,
+					},
+				},
+			})
+		}
+		_, err = USERS_DB.UpdateOne(
+			context.TODO(),
+			bson.M{"complexid": user.ComplexID},
+			changes,
+		)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	users[userID] = user
 }

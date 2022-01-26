@@ -42,6 +42,8 @@ func main() {
 	nu, err := db.HydrateUsers(d)
 	fmt.Println(nu, "Users hydrated in", time.Since(start))
 
+	db.Hydrated = true
+
 	discord.StartHandlers()
 
 	commands.Init()

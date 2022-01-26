@@ -11,6 +11,7 @@ import (
 )
 
 var mongoClient *mongo.Client
+var Hydrated bool
 
 func Connect() (*mongo.Client, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
