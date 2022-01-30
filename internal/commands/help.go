@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+	"time"
 	"wiseman/internal/discord"
 
 	"github.com/bwmarrin/discordgo"
@@ -20,8 +22,30 @@ func init() {
 }
 
 func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
-	for _, v := range Helpers {
-		s.ChannelMessageSend(m.ChannelID, v.Name)
+
+	fields := make([]*discordgo.MessageEmbedField, len(Helpers))
+	for i, v := range Helpers {
+		h := discordgo.MessageEmbedField{
+			Name:   v.Name,
+			Value:  v.Description,
+			Inline: false,
+		}
+		fields[i] = &h
+	}
+	fmt.Println(fields)
+
+	embed := &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{},
+		Color:       9004799,
+		Description: "help",
+		Fields:      fields,
+		Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+		Title:       "Help",
+	}
+
+	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	return nil
