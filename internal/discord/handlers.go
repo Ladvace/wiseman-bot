@@ -59,6 +59,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func memberAdd(s *discordgo.Session, u *discordgo.GuildMemberAdd) {
+	server := db.GetServerByID(u.GuildID)
+	s.ChannelMessageSend(server.WelcomeChannel, strings.ReplaceAll(server.WelcomeMessage, "[user]", u.User.Username))
 	fmt.Println("New Member", u.User.Username)
 }
 
