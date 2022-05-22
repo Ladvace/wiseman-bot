@@ -55,17 +55,26 @@ func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error
 
 		arg := strings.ToLower(args[0])
 
+		var found bool
 		var field []*discordgo.MessageEmbedField
-		fmt.Println(arg)
 
 		for _, v := range Helpers {
 			if strings.ToLower(v.Name) == arg {
+				found = true
 				field = append(field, &discordgo.MessageEmbedField{
 					Name:   v.Name,
 					Value:  v.Description + "\n" + v.Usage,
 					Inline: false,
 				})
 			}
+		}
+
+		if !found {
+			_, err := s.ChannelMessageSend(m.ChannelID, "No help found for `"+args[0]+"` :frowning:")
+			if err != nil {
+				log.Println(err)
+			}
+			return nil
 		}
 
 		embed := &discordgo.MessageEmbed{
