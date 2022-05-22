@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 	"wiseman/internal/discord"
@@ -38,17 +39,16 @@ func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error
 		fmt.Println(fields)
 
 		embed := &discordgo.MessageEmbed{
-			Author:      &discordgo.MessageEmbedAuthor{},
-			Color:       9004799,
-			Description: "help",
-			Fields:      fields,
-			Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
-			Title:       "Help",
+			Author:    &discordgo.MessageEmbedAuthor{},
+			Color:     9004799,
+			Fields:    fields,
+			Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+			Title:     "Help",
 		}
 
 		_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 
 	} else {
@@ -69,17 +69,16 @@ func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error
 		}
 
 		embed := &discordgo.MessageEmbed{
-			Author:      &discordgo.MessageEmbedAuthor{},
-			Color:       9004799,
-			Description: "help",
-			Fields:      field,
-			Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
-			Title:       "Help",
+			Author:    &discordgo.MessageEmbedAuthor{},
+			Color:     9004799,
+			Fields:    field,
+			Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+			Title:     "Help",
 		}
 
 		_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 	return nil
