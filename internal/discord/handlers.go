@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 	"wiseman/internal/db"
+	"wiseman/internal/services/user"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -29,10 +30,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	fmt.Println("Message:", m.Content)
+	fmt.Println("Message:", m.Content, "from:", m.Author.Username, "in:", m.GuildID)
 
 	u := db.GetUserByID(m.Author.ID, m.GuildID)
-	u.IncreaseExperience(10, m.GuildID)
+
+	user.IncreaseExperience(u, 10, m.GuildID)
 	fmt.Println("After Message:", m.Content)
 
 	// Check if prefix for this server is correct
@@ -95,7 +97,7 @@ func voiceStateChange(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
 		fmt.Println("Left after", timeDiff, "seconds")
 		delete(joinTimestamps, evStr)
 		u := db.GetUserByID(c.UserID, c.GuildID)
-		u.IncreaseExperience(uint(timeDiff)*2, c.GuildID)
+		user.IncreaseExperience(u, uint(timeDiff)*2, c.GuildID)
 	} else {
 		evStr := fmt.Sprintf("%s %s %s", c.GuildID, c.ChannelID, c.UserID)
 		// Join

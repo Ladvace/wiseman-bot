@@ -4,51 +4,18 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"wiseman/internal/entities"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type RankType struct {
-	RankName     string `bson:"rankname"`
-	RankMinLevel uint   `bson:"rankminlevel"`
-}
-
-type ServerType struct {
-	ServerID            string     `bson:"serverid"`
-	ServerPrefix        string     `bson:"guildprefix"`
-	NotificationChannel string     `bson:"notificationchannel"`
-	WelcomeChannel      string     `bson:"welcomechannel"`
-	CustomRanks         []RankType `bson:"customranks"`
-	RankTime            int        `bson:"ranktime"`
-	MsgExpMultiplier    float64    `bson:"msgexpmultiplier"`
-	TimeExpMultiplier   float64    `bson:"timeexpmultiplier"`
-	WelcomeMessage      string     `bson:"welcomemessage"`
-	DefaultRole         string     `bson:"defaultrole"`
-}
-
-type ServersType map[string]ServerType
-
-var servers ServersType
-
+var servers entities.ServersType
 var SERVERS_DB *mongo.Collection
 
 func init() {
-	servers = make(map[string]ServerType, 1000)
-}
-
-func (s ServerType) GetRankRoleByLevel(level uint) RankType {
-	for _, v := range s.CustomRanks {
-		if level >= v.RankMinLevel {
-			return v
-		}
-	}
-
-	return RankType{
-		RankName:     "",
-		RankMinLevel: 0,
-	}
+	servers = make(map[string]entities.ServerType, 1000)
 }
 
 func HydrateServers(d *discordgo.Session) (int, error) {
@@ -75,7 +42,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 		res := SERVERS_DB.FindOne(context.TODO(), bson.M{"serverid": guild.ID})
 
 		if res.Err() != mongo.ErrNoDocuments {
-			var server ServerType
+			var server entities.ServerType
 			err := res.Decode(&server)
 			if err != nil {
 				return 0, err
@@ -93,12 +60,12 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 		fmt.Println("Server not found in DB", guild.ID, guild.Name)
 		ns += 1
 
-		server := ServerType{
+		server := entities.ServerType{
 			ServerID:            guild.ID,
 			ServerPrefix:        "!",
 			NotificationChannel: "",
 			WelcomeChannel:      "",
-			CustomRanks:         []RankType{},
+			CustomRanks:         []entities.RankType{},
 			RankTime:            0,
 			MsgExpMultiplier:    1.00,
 			TimeExpMultiplier:   1.00,
@@ -113,10 +80,27 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 	return ns, nil
 }
 
-func GetServerByID(serverID string) ServerType {
+func GetServerByID(serverID string) entities.ServerType {
 	return servers[serverID]
 }
 
-func UpsertServerByID(serverID string, server ServerType) {
+func UpsertServerByID(serverID string, server entities.ServerType) {
 	servers[serverID] = server
+}
+
+func GetRankRoleByLevel(s entities.ServerType, level uint) entities.RankType {
+	for _, v := range s.CustomRanks {
+		if level >= v.RankMinLevel {
+			return v
+		}
+	}
+
+	return entities.RankType{
+		RankName:     "",
+		RankMinLevel: 0,
+	}
+}
+
+func GetServerMultiplierByGuildId(guildId string) float64 {
+	return servers[guildId].MsgExpMultiplier
 }

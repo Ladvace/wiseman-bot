@@ -6,6 +6,7 @@ import (
 	"time"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
+	"wiseman/internal/entities"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -48,7 +49,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 	var fields []LeaderboardPlace
 
 	for cursor.Next(ctx) {
-		var leaderboard db.UserType
+		var leaderboard entities.UserType
 		err := cursor.Decode(&leaderboard)
 		if err != nil {
 			return err

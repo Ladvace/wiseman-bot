@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
@@ -26,6 +27,7 @@ func init() {
 func SetwelcomeMsg(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 	ctx := context.TODO()
 	if len(args) == 0 {
+		log.Println("Expected arguments")
 		return nil
 	}
 	welcomeMessage := strings.Join(args, " ")
