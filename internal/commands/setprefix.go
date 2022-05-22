@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"log"
 	"wiseman/internal/db"
 	"wiseman/internal/discord"
 
@@ -26,6 +27,7 @@ func Setprefix(s *discordgo.Session, m *discordgo.MessageCreate, args []string) 
 
 	ctx := context.TODO()
 	if len(args) == 0 {
+		log.Println("Expected arguments")
 		return nil
 	}
 	prefix := args[0]

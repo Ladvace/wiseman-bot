@@ -3,8 +3,8 @@ package db
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
+	"wiseman/internal/entities"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/r3labs/diff/v2"
@@ -13,54 +13,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type UserType struct {
-	ComplexID              string `bson:"complexid"`
-	ServerID               string `bson:"serverid"`
-	UserID                 string `bson:"userid"`
-	MessagesCount          uint   `bson:"messagescount"`
-	CurrentLevelExperience uint   `bson:"currentlevelexperience"`
-	CurrentLevel           uint   `bson:"currentlevel"`
-	LastTimeOnline         uint64 `bson:"lastranktime"`
-	Bot                    bool   `bson:"bot"`
-	Verified               bool   `bson:"verified"`
-}
-
-type UsersType map[string]UserType
-
-func (u UserType) GetNextLevelMinExperience() uint {
-	user := users[u.ComplexID]
-	fLevel := float64(user.CurrentLevel + 1)
-
-	return uint(50 * (math.Pow(fLevel, 3) - 6*math.Pow(fLevel, 2) + 17*fLevel - 12) / 3)
-}
-
-func (u UserType) IncreaseExperience(v uint, guildID string) uint {
-	// Get original object using ComplexID to avoid injecting other mutated data
-	user := users[u.ComplexID]
-	server := servers[guildID]
-
-	for {
-		if user.CurrentLevelExperience+v < user.GetNextLevelMinExperience() {
-			user.CurrentLevelExperience += v * uint(server.MsgExpMultiplier)
-			break
-		}
-
-		v -= user.GetNextLevelMinExperience() - user.CurrentLevelExperience
-		user.CurrentLevelExperience = 0
-		user.CurrentLevel += 1
-	}
-
-	UpsertUserByID(u.ComplexID, user)
-
-	return u.CurrentLevelExperience
-}
-
-var users UsersType
-
+var users entities.UsersType
 var USERS_DB *mongo.Collection
 
 func init() {
-	users = make(map[string]UserType, 50000)
+	users = make(map[string]entities.UserType, 50000)
 }
 
 func HydrateUsers(d *discordgo.Session) (int, error) {
@@ -88,7 +45,7 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 			// Check if server is already in DB
 			res := USERS_DB.FindOne(context.TODO(), bson.M{"complexid": memberID})
 			if res.Err() != mongo.ErrNoDocuments {
-				var user UserType
+				var user entities.UserType
 				err := res.Decode(&user)
 				if err != nil {
 					return 0, err
@@ -101,7 +58,7 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 			fmt.Println("User not found in DB", memberID, member.User.Username+"#"+member.User.Discriminator)
 			nu += 1
 
-			user := UserType{
+			user := entities.UserType{
 				ComplexID:              memberID,
 				UserID:                 member.User.ID,
 				ServerID:               v.ServerID,
@@ -121,11 +78,11 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 	return nu, nil
 }
 
-func GetUserByID(userID, guildID string) UserType {
+func GetUserByID(userID, guildID string) entities.UserType {
 	return users[userID+"|"+guildID]
 }
 
-func UpsertUserByID(userID string, user UserType) {
+func UpsertUserByID(userID string, user entities.UserType) {
 	if Hydrated {
 		d, err := diff.NewDiffer(diff.TagName("bson"))
 		if err != nil {
