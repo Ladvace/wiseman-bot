@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 	"time"
 	"wiseman/internal/discord"
 
@@ -23,30 +24,63 @@ func init() {
 
 func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 
-	fields := make([]*discordgo.MessageEmbedField, len(Helpers))
-	for i, v := range Helpers {
-		h := discordgo.MessageEmbedField{
-			Name:   v.Name,
-			Value:  v.Description,
-			Inline: false,
+	if len(args) == 0 {
+
+		fields := make([]*discordgo.MessageEmbedField, len(Helpers))
+		for i, v := range Helpers {
+			h := discordgo.MessageEmbedField{
+				Name:   v.Name,
+				Value:  v.Description,
+				Inline: false,
+			}
+			fields[i] = &h
 		}
-		fields[i] = &h
-	}
-	fmt.Println(fields)
+		fmt.Println(fields)
 
-	embed := &discordgo.MessageEmbed{
-		Author:      &discordgo.MessageEmbedAuthor{},
-		Color:       9004799,
-		Description: "help",
-		Fields:      fields,
-		Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
-		Title:       "Help",
-	}
+		embed := &discordgo.MessageEmbed{
+			Author:      &discordgo.MessageEmbedAuthor{},
+			Color:       9004799,
+			Description: "help",
+			Fields:      fields,
+			Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+			Title:       "Help",
+		}
 
-	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
-	if err != nil {
-		fmt.Println(err)
-	}
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+		if err != nil {
+			fmt.Println(err)
+		}
 
+	} else {
+
+		arg := strings.ToLower(args[0])
+
+		var field []*discordgo.MessageEmbedField
+		fmt.Println(arg)
+
+		for _, v := range Helpers {
+			if strings.ToLower(v.Name) == arg {
+				field = append(field, &discordgo.MessageEmbedField{
+					Name:   v.Name,
+					Value:  v.Description + "\n" + v.Usage,
+					Inline: false,
+				})
+			}
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Author:      &discordgo.MessageEmbedAuthor{},
+			Color:       9004799,
+			Description: "help",
+			Fields:      field,
+			Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+			Title:       "Help",
+		}
+
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 	return nil
 }
