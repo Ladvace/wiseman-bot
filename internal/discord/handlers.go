@@ -19,18 +19,17 @@ type CommandFunc func(*discordgo.Session, *discordgo.MessageCreate, []string) er
 
 var Commands map[string]CommandFunc
 
-var joinTimestamps map[string]int64
-
-var tick = time.NewTicker(2000 * time.Millisecond)
+// set a ticker to count, second by second,
+//the amount of time the user is in the voice channel
+var tick = time.NewTicker(1000 * time.Millisecond)
 
 // first element of the array is the joinCh and second is leaveCh
-var chanMap = make(map[string]chan bool)
+var leaveMap = make(map[string]chan bool)
+var changeMap = make(map[string]chan bool)
 var joinCh = make(chan userTimer)
-var counterCh = make(chan int, 100)
 
 func init() {
 	Commands = make(map[string]CommandFunc, 200)
-	joinTimestamps = make(map[string]int64, 1000)
 	go handleTimers()
 }
 
@@ -109,23 +108,28 @@ func voiceStateChange(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
 		// check if the user is streaming his screen
 		if c.ChannelID == "" {
 			fmt.Println(c.VoiceState.UserID, "left", c.GuildID)
-			chanMap[c.UserID] <- true
+			leaveMap[c.UserID] <- true
 		} else if c.ChannelID != "" && c.ChannelID != c.BeforeUpdate.ChannelID {
 			fmt.Println("The user changed voice channel")
+			changeMap[c.UserID] <- true
+			joinCh <- userTimer{
+				UserId:  c.UserID,
+				GuildId: c.GuildID,
+			}
 		} else if c.ChannelID != "" && !c.BeforeUpdate.SelfMute && c.SelfMute && !c.SelfDeaf {
-			fmt.Println("The user is muted")
+			fmt.Println("The user muted himself")
 		} else if c.ChannelID != "" && !c.BeforeUpdate.SelfDeaf && c.SelfDeaf {
-			fmt.Println("The user is deaf")
+			fmt.Println("The user deafened himself")
 		} else if c.ChannelID != "" && c.BeforeUpdate.SelfMute && !c.BeforeUpdate.SelfDeaf && !c.SelfMute && !c.SelfDeaf {
-			fmt.Println("The user is unmuted")
+			fmt.Println("The user unmuted himself")
 		} else if c.ChannelID != "" && c.BeforeUpdate.SelfDeaf && c.BeforeUpdate.SelfMute && !c.SelfDeaf && !c.SelfMute {
-			fmt.Println("The user is undeaf")
+			fmt.Println("The user undeafened himself")
 		} else {
 			fmt.Println("The user is performing another operation")
 		}
 	} else {
 		// Join
-		fmt.Println(c.UserID, "Joined")
+		fmt.Println(c.UserID, "Joined", c.GuildID)
 		joinCh <- userTimer{
 			UserId:  c.UserID,
 			GuildId: c.GuildID,
@@ -142,16 +146,19 @@ func handleTimers() {
 		e := <-joinCh
 
 		go func(ut userTimer) {
-			chanMap[ut.UserId] = make(chan bool)
+			changeMap[ut.UserId] = make(chan bool)
 
 			for {
 				select {
-				case <-chanMap[ut.UserId]:
-					// Add counter seconds to now time
-					fmt.Println("Time Spent", counter, " seconds; from", time.Unix(now, 0), "to", time.Unix(now+int64(counter), 0))
-					close(chanMap[ut.UserId])
-					delete(chanMap, ut.UserId)
+				case <-leaveMap[ut.UserId]:
+					fmt.Println("Time Spent", counter, "seconds; from", time.Unix(now, 0), "to", time.Unix(now+int64(counter), 0))
+					close(leaveMap[ut.UserId])
+					delete(leaveMap, ut.UserId)
 					return
+				case <-changeMap[ut.UserId]:
+					fmt.Println("Time Spent", counter, "seconds; from", time.Unix(now, 0), "to", time.Unix(now+int64(counter), 0))
+					counter = 0
+					now = time.Now().Unix()
 				case <-tick.C:
 					counter += 1
 					u := db.GetUserByID(ut.UserId, ut.GuildId)
