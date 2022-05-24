@@ -15,7 +15,7 @@ var servers entities.ServersType
 var SERVERS_DB *mongo.Collection
 
 func init() {
-	servers = make(map[string]entities.ServerType, 1000)
+	servers = make(map[string]*entities.ServerType, 1000)
 }
 
 func HydrateServers(d *discordgo.Session) (int, error) {
@@ -53,7 +53,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 				return server.CustomRanks[i].RankMinLevel > server.CustomRanks[j].RankMinLevel
 			})
 
-			UpsertServerByID(guild.ID, server)
+			UpsertServerByID(guild.ID, &server)
 			continue
 		}
 
@@ -72,7 +72,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 			WelcomeMessage:      "",
 			DefaultRole:         "",
 		}
-		UpsertServerByID(guild.ID, server)
+		UpsertServerByID(guild.ID, &server)
 
 		SERVERS_DB.InsertOne(context.TODO(), server)
 	}
@@ -80,11 +80,11 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 	return ns, nil
 }
 
-func GetServerByID(serverID string) entities.ServerType {
+func GetServerByID(serverID string) *entities.ServerType {
 	return servers[serverID]
 }
 
-func UpsertServerByID(serverID string, server entities.ServerType) {
+func UpsertServerByID(serverID string, server *entities.ServerType) {
 	servers[serverID] = server
 }
 

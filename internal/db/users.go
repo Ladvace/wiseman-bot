@@ -17,7 +17,7 @@ var users entities.UsersType
 var USERS_DB *mongo.Collection
 
 func init() {
-	users = make(map[string]entities.UserType, 50000)
+	users = make(map[string]*entities.UserType, 50000)
 }
 
 func HydrateUsers(d *discordgo.Session) (int, error) {
@@ -51,7 +51,7 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 					return 0, err
 				}
 
-				UpsertUserByID(memberID, user)
+				UpsertUserByID(memberID, &user)
 				continue
 			}
 
@@ -71,18 +71,18 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 			}
 
 			USERS_DB.InsertOne(context.TODO(), user)
-			UpsertUserByID(memberID, user)
+			UpsertUserByID(memberID, &user)
 		}
 	}
 
 	return nu, nil
 }
 
-func GetUserByID(userID, guildID string) entities.UserType {
+func GetUserByID(userID, guildID string) *entities.UserType {
 	return users[userID+"|"+guildID]
 }
 
-func UpsertUserByID(userID string, user entities.UserType) {
+func UpsertUserByID(userID string, user *entities.UserType) {
 	if Hydrated {
 		d, err := diff.NewDiffer(diff.TagName("bson"))
 		if err != nil {

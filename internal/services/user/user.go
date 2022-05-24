@@ -8,13 +8,13 @@ import (
 
 var users entities.UsersType
 
-func GetNextLevelMinExperience(u entities.UserType) uint {
+func GetNextLevelMinExperience(u *entities.UserType) uint {
 	fLevel := float64(u.CurrentLevel + 1)
 
 	return uint(50 * (math.Pow(fLevel, 3) - 6*math.Pow(fLevel, 2) + 17*fLevel - 12) / 3)
 }
 
-func IncreaseExperience(u entities.UserType, v uint, guildID string) uint {
+func IncreaseExperience(u *entities.UserType, v uint, guildID string) uint {
 	// Get original object using ComplexID to avoid injecting other mutated data
 	serverMultiplier := db.GetServerMultiplierByGuildId(guildID)
 
