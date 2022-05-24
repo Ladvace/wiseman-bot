@@ -12,4 +12,4 @@ type UserType struct {
 	Verified               bool   `bson:"verified"`
 }
 
-type UsersType map[string]UserType
+type UsersType map[string]*UserType
