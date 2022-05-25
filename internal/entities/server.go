@@ -1,8 +1,9 @@
 package entities
 
-type RankType struct {
-	RankName     string `bson:"rankname"`
-	RankMinLevel uint   `bson:"rankminlevel"`
+type RoleType struct {
+	Id       string `bson:"rankname"`
+	MinLevel uint   `bson:"rankminlevel"`
+	MaxLevel uint   `bson:"rankmaxlevel"`
 }
 
 type ServerType struct {
@@ -10,7 +11,7 @@ type ServerType struct {
 	ServerPrefix        string     `bson:"guildprefix"`
 	NotificationChannel string     `bson:"notificationchannel"`
 	WelcomeChannel      string     `bson:"welcomechannel"`
-	CustomRanks         []RankType `bson:"customranks"`
+	CustomRanks         []RoleType `bson:"customranks"`
 	RankTime            int        `bson:"ranktime"`
 	MsgExpMultiplier    float64    `bson:"msgexpmultiplier"`
 	TimeExpMultiplier   float64    `bson:"timeexpmultiplier"`

@@ -22,9 +22,15 @@ func RetrieveUser(userID, serverID string) (*discordgo.User, error) {
 
 func IsUserManager(userId, serverId string) bool {
 
-	perms, err := client.State.UserChannelPermissions(userId, serverId)
-	if err != nil {
-		log.Error("Error retrieving user permissions", err)
+	var perms int64
+	var err error
+
+	if perms, err = client.State.UserChannelPermissions(userId, serverId); err != nil {
+	} else {
+		perms, err = client.UserChannelPermissions(userId, serverId)
+		if err != nil {
+			log.Error("Error retrieving user permissions", err)
+		}
 	}
 
 	if perms&discordgo.PermissionManageServer == 0 {
@@ -34,15 +40,24 @@ func IsUserManager(userId, serverId string) bool {
 	return false
 }
 
-func IsUserAdmin(userId, serverId string) bool {
-	perms, err := client.State.UserChannelPermissions(userId, serverId)
+func IsUserAdmin(userId, channelId string) bool {
+	var perms int64
+	var err error
+
+	// if perms, err = client.State.UserChannelPermissions(userId, serverId); err != nil {
+	// } else {
+	perms, err = client.State.UserChannelPermissions(userId, channelId)
 	if err != nil {
 		log.Error("Error retrieving user permissions", err)
 	}
+	// }
 
 	if perms&discordgo.PermissionAdministrator == 0 {
-		return true
+		log.Info("User is not Admin")
+		return false
 	}
 
-	return false
+	log.Info("User is Admin")
+	return true
+
 }
