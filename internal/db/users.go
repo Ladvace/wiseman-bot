@@ -17,7 +17,7 @@ var users entities.UsersType
 var USERS_DB *mongo.Collection
 
 func init() {
-	users = make(map[string]entities.UserType, 50000)
+	users = make(map[string]*entities.UserType, 50000)
 }
 
 func UpdateExpById(userID, guildID string, exp int) {
@@ -67,7 +67,7 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 					return 0, err
 				}
 
-				UpsertUserByID(memberID, user)
+				UpsertUserByID(memberID, &user)
 				continue
 			}
 
@@ -87,7 +87,7 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 			}
 
 			USERS_DB.InsertOne(context.TODO(), user)
-			UpsertUserByID(memberID, user)
+			UpsertUserByID(memberID, &user)
 		}
 	}
 

@@ -18,4 +18,4 @@ type ServerType struct {
 	DefaultRole         string     `bson:"defaultrole"`
 }
 
-type ServersType map[string]ServerType
+type ServersType map[string]*ServerType
