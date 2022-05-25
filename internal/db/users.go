@@ -20,7 +20,7 @@ func init() {
 	users = make(map[string]entities.UserType, 50000)
 }
 
-func UpdateExpById(userID, guildID string, exp int) error {
+func UpdateExpById(userID, guildID string, exp int) {
 
 	userStruct := users[userID+"|"+guildID]
 
