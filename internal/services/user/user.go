@@ -6,8 +6,6 @@ import (
 	"wiseman/internal/entities"
 )
 
-var users entities.UsersType
-
 func GetNextLevelMinExperience(u entities.UserType) uint {
 	fLevel := float64(u.CurrentLevel + 1)
 
