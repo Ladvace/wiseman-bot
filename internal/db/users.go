@@ -26,7 +26,6 @@ func UpdateExpById(userID, guildID string, exp int) error {
 
 	userStruct.CurrentLevelExperience += uint(exp)
 	UpdateUser(userID, guildID, userStruct)
-	return nil
 }
 
 func GetUserByID(userID, guildID string) entities.UserType {
