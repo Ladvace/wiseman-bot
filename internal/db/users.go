@@ -20,6 +20,16 @@ func init() {
 	users = make(map[string]*entities.UserType, 50000)
 }
 
+func UpdateExpById(userID, guildID string, exp int) {
+	userStruct := users[userID+"|"+guildID]
+	userStruct.CurrentLevelExperience += uint(exp)
+	UpdateUser(userID, guildID, userStruct)
+}
+
+func UpdateUser(userId, guildId string, u *entities.UserType) {
+	users[userId+"|"+guildId] = u
+}
+
 func HydrateUsers(d *discordgo.Session) (int, error) {
 	var nu int
 	for _, v := range servers {
