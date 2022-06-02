@@ -26,3 +26,7 @@ func HydrateCrossLookup() {
 	}
 	fmt.Println("Hydrated cross lookup maps")
 }
+
+func GetServerUsers(userID string) []*entities.ServerType {
+	return userServers[userID]
+}
