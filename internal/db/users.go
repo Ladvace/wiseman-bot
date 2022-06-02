@@ -14,10 +14,12 @@ import (
 )
 
 var users entities.UsersType
+var usersBySimpleID map[string][]string
 var USERS_DB *mongo.Collection
 
 func init() {
 	users = make(map[string]*entities.UserType, 50000)
+	usersBySimpleID = make(map[string][]string, 50000)
 }
 
 func UpdateExpById(userID, guildID string, exp int) {
@@ -92,6 +94,10 @@ func GetUserByID(userID, guildID string) *entities.UserType {
 	return users[userID+"|"+guildID]
 }
 
+func GetUserServersByID(userID string) []string {
+	return usersBySimpleID[userID]
+}
+
 func UpsertUserByID(userID string, user *entities.UserType) {
 	if Hydrated {
 		d, err := diff.NewDiffer(diff.TagName("bson"))
@@ -130,4 +136,36 @@ func UpsertUserByID(userID string, user *entities.UserType) {
 	}
 
 	users[userID] = user
+	usersBySimpleID[user.UserID] = []string{user.ServerID}
 }
+
+// func UpsertUserBySimpleID(simpleUserID string, servers []entities.ServerType) {
+// 	if Hydrated {
+// 		d, err := diff.NewDiffer(diff.TagName("bson"))
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 		changelog, err := d.Diff(usersBySimpleID[simpleUserID], servers)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 		if len(changelog) == 0 {
+// 			return
+// 		}
+
+// 		changes := bson.D{}
+// 		for _, v := range changelog {
+// 			changes = append(changes, primitive.E{
+// 				Key: "$set",
+// 				Value: bson.D{
+// 					primitive.E{
+// 						Key:   strings.Join(v.Path, "."),
+// 						Value: v.To,
+// 					},
+// 				},
+// 			})
+// 		}
+// 	}
+
+// 	usersBySimpleID[simpleUserID] = servers
+// }
