@@ -1,4 +1,4 @@
-package discord
+package services
 
 import (
 	"github.com/bwmarrin/discordgo"
@@ -44,13 +44,10 @@ func IsUserAdmin(userId, channelId string) bool {
 	var perms int64
 	var err error
 
-	// if perms, err = client.State.UserChannelPermissions(userId, serverId); err != nil {
-	// } else {
 	perms, err = client.State.UserChannelPermissions(userId, channelId)
 	if err != nil {
 		log.Error("Error retrieving user permissions", err)
 	}
-	// }
 
 	if perms&discordgo.PermissionAdministrator == 0 {
 		log.Info("User is not Admin")
@@ -60,4 +57,22 @@ func IsUserAdmin(userId, channelId string) bool {
 	log.Info("User is Admin")
 	return true
 
+}
+
+func SetRole(userId, serverId, roleId string) error {
+
+	err := client.GuildMemberRoleAdd(serverId, userId, roleId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemoveRole(userId, serverId, roleId, oldRoleId string) error {
+
+	err := client.GuildMemberRoleRemove(serverId, userId, oldRoleId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

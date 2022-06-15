@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"wiseman/internal/db"
-	"wiseman/internal/discord"
+	"wiseman/internal/services"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,12 +16,12 @@ import (
 func init() {
 	Helpers = append(Helpers, Helper{
 		Name:        "setmultiplier",
-		Category:    "This is a category",
-		Description: "This is a descriptio",
+		Category:    "Points",
+		Description: "setmultiplier sets the ",
 		Usage:       "This is a usage",
 	})
 
-	discord.Commands["setmultiplier"] = Setmultiplier
+	services.Commands["setmultiplier"] = Setmultiplier
 }
 
 func Setmultiplier(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {

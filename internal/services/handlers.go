@@ -1,11 +1,10 @@
-package discord
+package services
 
 import (
 	"fmt"
 	"strings"
 	"time"
 	"wiseman/internal/db"
-	"wiseman/internal/services/user"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -46,7 +45,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	u := db.GetUserByID(m.Author.ID, m.GuildID)
 
-	user.IncreaseExperience(u, 10, m.GuildID)
+	IncreaseExperience(u, 10, m.GuildID)
 	fmt.Println("After Message:", m.Content)
 
 	// Check if prefix for this server is correct
@@ -106,7 +105,7 @@ func voiceStateChange(s *discordgo.Session, c *discordgo.VoiceStateUpdate) {
 	// Leave the voice channel
 	if c.BeforeUpdate != nil {
 		// check if the user is streaming his screen
-		if c.ChannelID == "" {
+		if c.VoiceState.ChannelID == "" {
 			fmt.Println(c.VoiceState.UserID, "left", c.GuildID)
 			leaveMap[c.UserID] <- true
 		} else if c.ChannelID != "" && c.ChannelID != c.BeforeUpdate.ChannelID {
@@ -147,6 +146,7 @@ func handleTimers() {
 
 		go func(ut userTimer) {
 			changeMap[ut.UserId] = make(chan bool)
+			leaveMap[ut.UserId] = make(chan bool)
 
 			for {
 				select {
@@ -162,7 +162,7 @@ func handleTimers() {
 				case <-tick.C:
 					counter += 1
 					u := db.GetUserByID(ut.UserId, ut.GuildId)
-					user.IncreaseExperience(u, uint(time.Second*1), ut.GuildId)
+					IncreaseExperience(u, 1, ut.GuildId)
 				}
 			}
 		}(e)

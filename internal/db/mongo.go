@@ -14,9 +14,10 @@ var mongoClient *mongo.Client
 var Hydrated bool
 
 func Connect() (*mongo.Client, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	var err error
-	mongoClient, err = mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +26,6 @@ func Connect() (*mongo.Client, error) {
 	USERS_DB = mongoClient.Database(shared.DB_NAME).Collection(shared.USERS_INFIX)
 
 	err = mongoClient.Ping(context.TODO(), nil)
-
 	if err != nil {
 		return nil, err
 	}

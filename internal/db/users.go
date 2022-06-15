@@ -13,12 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var users entities.UsersType
-var USERS_DB *mongo.Collection
+var users = make(map[string]*entities.UserType, 50000)
 
-func init() {
-	users = make(map[string]*entities.UserType, 50000)
-}
+var USERS_DB *mongo.Collection
 
 func HydrateUsers(d *discordgo.Session) (int, error) {
 	var nu int
@@ -80,6 +77,14 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 
 func GetUserByID(userID, guildID string) *entities.UserType {
 	return users[userID+"|"+guildID]
+}
+
+func ResetRanks() error {
+	for _, v := range users {
+		v.CurrentLevel = 1
+		v.CurrentLevelExperience = 0
+	}
+	return nil
 }
 
 func UpsertUserByID(userID string, user *entities.UserType) {

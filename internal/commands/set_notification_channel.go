@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"wiseman/internal/db"
-	"wiseman/internal/discord"
+	"wiseman/internal/services"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,7 +20,7 @@ func init() {
 		Usage:       "This is a usage",
 	})
 
-	discord.Commands["setnotificationchannel"] = Setnotificationchannel
+	services.Commands["setnotificationchannel"] = Setnotificationchannel
 }
 
 func Setnotificationchannel(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {

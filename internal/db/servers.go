@@ -88,15 +88,16 @@ func UpsertServerByID(serverID string, server *entities.ServerType) {
 	servers[serverID] = server
 }
 
-func UpdateRoleServer(serverID string, rank entities.RoleType) {
-	for i, v := range servers[serverID].CustomRanks {
-		if v.Id == rank.Id {
-			servers[serverID].CustomRanks[i] = rank
-			return
-		}
-	}
+func GetCustomRanksByGuildId(guildId string) []entities.RoleType {
+	return servers[guildId].CustomRanks
+}
+
+func UpdateRoleServer(serverID string, rank entities.RoleType) error {
 
 	servers[serverID].CustomRanks = append(servers[serverID].CustomRanks, rank)
+	res := SERVERS_DB.FindOneAndUpdate(context.TODO(), bson.M{"serverid": serverID}, bson.M{"$set": bson.M{"customranks": servers[serverID].CustomRanks}})
+
+	return res.Err()
 }
 
 func GetRankRoleByLevel(s entities.ServerType, level uint) entities.RoleType {
