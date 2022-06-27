@@ -36,10 +36,20 @@ func main() {
 
 	// Hydrate data on cache
 	start := time.Now()
+
 	ns, err := db.HydrateServers(d)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(ns, "Servers hydrated in", time.Since(start))
 	start = time.Now()
+
 	nu, err := db.HydrateUsers(d)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(nu, "Users hydrated in", time.Since(start))
 
 	db.HydrateCrossLookup()
@@ -49,6 +59,8 @@ func main() {
 	services.StartHandlers()
 
 	commands.Init()
+
+	go db.StartUsersDBUpdater()
 
 	// Start REST API
 	e := internal.StartEcho()

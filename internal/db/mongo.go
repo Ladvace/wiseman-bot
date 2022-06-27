@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var mongoClient *mongo.Client
 var Hydrated bool
 
 func Connect() (*mongo.Client, error) {
