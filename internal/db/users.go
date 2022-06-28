@@ -126,3 +126,15 @@ func UpsertUserByID(userID string, user *entities.UserType) {
 
 	users[userID] = user
 }
+
+func RetrieveUsersByServerID(serverID string) []entities.UserType {
+	var u []entities.UserType
+
+	for _, v := range users {
+		if v.ServerID == serverID {
+			u = append(u, *v)
+		}
+	}
+
+	return u
+}

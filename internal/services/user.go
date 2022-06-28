@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"wiseman/internal/db"
@@ -8,8 +9,6 @@ import (
 
 	"github.com/labstack/gommon/log"
 )
-
-var users entities.UsersType
 
 func GetNextLevelMinExperience(u *entities.UserType) uint {
 	fLevel := float64(u.CurrentLevel + 1)
@@ -35,26 +34,25 @@ func IncreaseExperience(u *entities.UserType, v uint, guildID string) uint {
 
 		customRank := db.GetCustomRanksByGuildId(u.ServerID)
 		sort.Slice(customRank, func(i, j int) bool {
-			return customRank[i].MinLevel > customRank[j].MinLevel
+			return customRank[i].MinLevel < customRank[j].MinLevel
 		})
 
-		if len(customRank) > 0 {
-			for i, v := range customRank {
-				if user.CurrentLevel >= v.MinLevel && user.CurrentLevel < v.MaxLevel {
-					if i >= 1 {
-						err := RemoveRole(u.UserID, u.ServerID, v.Id, customRank[i-1].Id)
-						if err != nil {
-							log.Error("Error removing role", err)
-						}
-					}
-					err := SetRole(u.UserID, u.ServerID, v.Id)
+		for i, v := range customRank {
+			if user.CurrentLevel >= v.MinLevel && user.CurrentLevel < v.MaxLevel {
+
+				if i > 0 {
+					err := RemoveRole(u.UserID, u.ServerID, v.Id, customRank[i-1].Id)
 					if err != nil {
-						log.Error("Error setting role", err)
+						log.Error("Error removing role", err)
 					}
+				}
+
+				err := SetRole(u.UserID, u.ServerID, v.Id)
+				if err != nil {
+					log.Error("Error setting role", err)
 				}
 			}
 		}
-
 	}
 
 	// TODO: UpsertUserByID should load from the cache inside the database all data
@@ -62,4 +60,20 @@ func IncreaseExperience(u *entities.UserType, v uint, guildID string) uint {
 	db.UpsertUserByID(user.ComplexID, &user)
 
 	return user.CurrentLevelExperience
+}
+
+func UpdateUsersRoles(serverID string, customRank entities.CustomRanks) {
+
+	users := db.RetrieveUsersByServerID(serverID)
+	for _, u := range users {
+		if !u.Bot {
+			if u.CurrentLevel >= customRank.MinLevel && u.CurrentLevel < customRank.MaxLevel {
+				err := SetRole(u.UserID, u.ServerID, customRank.Id)
+				fmt.Println("role set")
+				if err != nil {
+					continue
+				}
+			}
+		}
+	}
 }
