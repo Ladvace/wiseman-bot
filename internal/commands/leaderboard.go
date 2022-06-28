@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 	"wiseman/internal/db"
-	"wiseman/internal/discord"
 	"wiseman/internal/entities"
+	"wiseman/internal/services"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,7 +22,7 @@ func init() {
 		Usage:       "This is a usage",
 	})
 
-	discord.Commands["leaderboard"] = Leaderboard
+	services.Commands["leaderboard"] = Leaderboard
 }
 
 type LeaderboardPlace struct {
@@ -36,8 +36,8 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 	collection := db.USERS_DB
 
 	findOptions := options.Find()
-	// Sort by `currentlevel` field descending
-	findOptions.SetSort(bson.D{primitive.E{Key: "currentlevel", Value: -1}})
+	// Sort by `currentlevel` and `currentlevelexperience` field descending
+	findOptions.SetSort(bson.D{primitive.E{Key: "currentlevel", Value: -1}, {Key: "currentlevelexperience", Value: -1}})
 	// Limit by 10 documents only
 	findOptions.SetLimit(10)
 
@@ -55,7 +55,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 			return err
 		}
 
-		leaderboardUser, err := discord.RetrieveUser(leaderboard.UserID, m.GuildID)
+		leaderboardUser, err := services.RetrieveUser(leaderboard.UserID, m.GuildID)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -65,7 +65,7 @@ func Leaderboard(s *discordgo.Session, m *discordgo.MessageCreate, args []string
 			Level: leaderboard.CurrentLevel,
 			Field: &discordgo.MessageEmbedField{
 				Name:  string(leaderboardUser.Username),
-				Value: fmt.Sprint("Level ", leaderboard.CurrentLevel),
+				Value: fmt.Sprint("Level ", leaderboard.CurrentLevel, " - ", leaderboard.CurrentLevelExperience, " xp"),
 			}},
 		)
 	}

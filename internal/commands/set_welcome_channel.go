@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"wiseman/internal/db"
-	"wiseman/internal/discord"
+	"wiseman/internal/services"
 
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,16 +14,16 @@ import (
 
 func init() {
 	Helpers = append(Helpers, Helper{
-		Name:        "setNotificationchannel",
+		Name:        "SetWelcomechannel",
 		Category:    "This is a category",
 		Description: "This is a descriptio",
 		Usage:       "This is a usage",
 	})
 
-	discord.Commands["setnotificationchannel"] = Setnotificationchannel
+	services.Commands["setwelcomechannel"] = Setwelcomechannel
 }
 
-func Setnotificationchannel(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
+func Setwelcomechannel(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 
 	ctx := context.TODO()
 	if len(args) == 0 {
@@ -39,15 +39,15 @@ func Setnotificationchannel(s *discordgo.Session, m *discordgo.MessageCreate, ar
 			ctx,
 			bson.M{"serverid": m.GuildID},
 			bson.D{
-				primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "notificationchannel", Value: ""}}},
+				primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "welcomechannel", Value: ""}}},
 			},
 		)
 
-		server.NotificationChannel = ""
+		server.WelcomeChannel = ""
 		db.UpsertServerByID(m.GuildID, server)
 
 		if err == nil {
-			s.ChannelMessageSend(m.ChannelID, "Notification Channel has been reset!")
+			s.ChannelMessageSend(m.ChannelID, "Welcome Channel has been reset!")
 		}
 	}
 
@@ -60,15 +60,15 @@ func Setnotificationchannel(s *discordgo.Session, m *discordgo.MessageCreate, ar
 		ctx,
 		bson.M{"serverid": m.GuildID},
 		bson.D{
-			primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "notificationchannel", Value: channelId}}},
+			primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "welcomechannel", Value: channelId}}},
 		},
 	)
 
-	server.NotificationChannel = channelId
+	server.WelcomeChannel = channelId
 	db.UpsertServerByID(m.GuildID, server)
 
 	if err == nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Notification Channel set to %#v", channel.Name))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Welcome Channel set to %#v", channel.Name))
 	}
 
 	return nil

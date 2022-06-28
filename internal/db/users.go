@@ -13,12 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var users entities.UsersType
-var USERS_DB *mongo.Collection
+var users = make(map[string]*entities.UserType, 50000)
 
-func init() {
-	users = make(map[string]*entities.UserType, 50000)
-}
+var USERS_DB *mongo.Collection
 
 func UpdateExpById(userID, guildID string, exp int) {
 	userStruct := users[userID+"|"+guildID]
@@ -92,6 +89,14 @@ func GetUserByID(userID, guildID string) *entities.UserType {
 	return users[userID+"|"+guildID]
 }
 
+func ResetRanks() error {
+	for _, v := range users {
+		v.CurrentLevel = 1
+		v.CurrentLevelExperience = 0
+	}
+	return nil
+}
+
 func UpsertUserByID(userID string, user *entities.UserType) {
 	if Hydrated {
 		d, err := diff.NewDiffer(diff.TagName("bson"))
@@ -130,4 +135,16 @@ func UpsertUserByID(userID string, user *entities.UserType) {
 	}
 
 	users[userID] = user
+}
+
+func RetrieveUsersByServerID(serverID string) []entities.UserType {
+	var u []entities.UserType
+
+	for _, v := range users {
+		if v.ServerID == serverID {
+			u = append(u, *v)
+		}
+	}
+
+	return u
 }

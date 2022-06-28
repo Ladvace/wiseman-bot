@@ -6,6 +6,7 @@ require (
 	github.com/bwmarrin/discordgo v0.23.2
 	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo/v4 v4.6.3
+	github.com/labstack/gommon v0.3.1
 	github.com/r3labs/diff/v2 v2.14.5
 	go.mongodb.org/mongo-driver v1.8.2
 	k8s.io/apimachinery v0.24.0
@@ -18,7 +19,6 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

@@ -50,7 +50,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 
 			// TODO: FIX
 			sort.SliceStable(server.CustomRanks, func(i, j int) bool {
-				return server.CustomRanks[i].RankMinLevel > server.CustomRanks[j].RankMinLevel
+				return server.CustomRanks[i].MinLevel > server.CustomRanks[j].MinLevel
 			})
 
 			UpsertServerByID(guild.ID, &server)
@@ -65,7 +65,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 			ServerPrefix:        "!",
 			NotificationChannel: "",
 			WelcomeChannel:      "",
-			CustomRanks:         []entities.RankType{},
+			CustomRanks:         []entities.CustomRanks{},
 			RankTime:            0,
 			MsgExpMultiplier:    1.00,
 			TimeExpMultiplier:   1.00,
@@ -88,16 +88,28 @@ func UpsertServerByID(serverID string, server *entities.ServerType) {
 	servers[serverID] = server
 }
 
-func GetRankRoleByLevel(s entities.ServerType, level uint) entities.RankType {
+func GetCustomRanksByGuildId(guildId string) []entities.CustomRanks {
+	return servers[guildId].CustomRanks
+}
+
+func UpdateRoleServer(serverID string, rank entities.CustomRanks) error {
+
+	servers[serverID].CustomRanks = append(servers[serverID].CustomRanks, rank)
+	res := SERVERS_DB.FindOneAndUpdate(context.TODO(), bson.M{"serverid": serverID}, bson.M{"$set": bson.M{"customranks": servers[serverID].CustomRanks}})
+
+	return res.Err()
+}
+
+func GetRankRoleByLevel(s entities.ServerType, level uint) entities.CustomRanks {
 	for _, v := range s.CustomRanks {
-		if level >= v.RankMinLevel {
+		if level >= v.MinLevel {
 			return v
 		}
 	}
 
-	return entities.RankType{
-		RankName:     "",
-		RankMinLevel: 0,
+	return entities.CustomRanks{
+		Id:       "",
+		MinLevel: 0,
 	}
 }
 

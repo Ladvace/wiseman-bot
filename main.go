@@ -7,7 +7,7 @@ import (
 	"wiseman/internal"
 	"wiseman/internal/commands"
 	"wiseman/internal/db"
-	"wiseman/internal/discord"
+	"wiseman/internal/services"
 
 	"github.com/joho/godotenv"
 )
@@ -27,7 +27,7 @@ func main() {
 	fmt.Println("Connected to MongoDB")
 
 	// Connect to discord
-	d, err := discord.Connect()
+	d, err := services.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +46,7 @@ func main() {
 
 	db.Hydrated = true
 
-	discord.StartHandlers()
+	services.StartHandlers()
 
 	commands.Init()
 
