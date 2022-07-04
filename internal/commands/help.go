@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 	"time"
-	"wiseman/internal/discord"
+	"wiseman/internal/services"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -20,7 +20,7 @@ type Helper struct {
 var Helpers []Helper
 
 func init() {
-	discord.Commands["help"] = Help
+	services.Commands["help"] = Help
 }
 
 func Help(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {

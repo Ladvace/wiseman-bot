@@ -7,7 +7,7 @@ import (
 	"wiseman/internal"
 	"wiseman/internal/commands"
 	"wiseman/internal/db"
-	"wiseman/internal/discord"
+	"wiseman/internal/services"
 
 	"github.com/joho/godotenv"
 )
@@ -27,7 +27,7 @@ func main() {
 	fmt.Println("Connected to MongoDB")
 
 	// Connect to discord
-	d, err := discord.Connect()
+	d, err := services.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -36,19 +36,32 @@ func main() {
 
 	// Hydrate data on cache
 	start := time.Now()
+
 	ns, err := db.HydrateServers(d)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(ns, "Servers hydrated in", time.Since(start))
 	start = time.Now()
+
 	nu, err := db.HydrateUsers(d)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(nu, "Users hydrated in", time.Since(start))
 
 	db.HydrateCrossLookup()
 
 	db.Hydrated = true
 
-	discord.StartHandlers()
+	services.StartHandlers()
 
 	commands.Init()
+
+	go db.StartUsersDBUpdater()
+	go db.StartServersDBUpdater()
 
 	// Start REST API
 	e := internal.StartEcho()

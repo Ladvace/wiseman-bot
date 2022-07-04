@@ -9,7 +9,7 @@ var userServers = make(map[string][]*entities.ServerType, 50000)
 var serverUsers = make(map[string][]*entities.UserType, 50000)
 
 func HydrateCrossLookup() {
-	for _, s := range users {
+	for _, s := range users.cache {
 		// Check if user already has a servers list
 		if _, ok := userServers[s.UserID]; !ok {
 			userServers[s.UserID] = make([]*entities.ServerType, 0)
@@ -20,7 +20,7 @@ func HydrateCrossLookup() {
 			serverUsers[s.UserID] = make([]*entities.UserType, 0)
 		}
 
-		userServers[s.UserID] = append(userServers[s.UserID], servers[s.ServerID])
+		userServers[s.UserID] = append(userServers[s.UserID], servers.cache[s.ServerID])
 		serverUsers[s.ServerID] = append(serverUsers[s.ServerID], s)
 
 	}

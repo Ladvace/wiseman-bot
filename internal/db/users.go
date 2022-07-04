@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"wiseman/internal/entities"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,16 +14,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var users entities.UsersType
+type Users struct {
+	cache  map[string]*entities.UserType
+	writes int
+	lock   sync.RWMutex
+}
+
+var users Users = Users{
+	cache:  make(map[string]*entities.UserType, 50000),
+	writes: 0,
+}
+
 var USERS_DB *mongo.Collection
 
-func init() {
-	users = make(map[string]*entities.UserType, 50000)
+func UpdateExpById(userID, guildID string, exp int) {
+	userStruct := users.cache[userID+"|"+guildID]
+	userStruct.CurrentLevelExperience += uint(exp)
+	UpdateUser(userID, userStruct)
 }
 
 func HydrateUsers(d *discordgo.Session) (int, error) {
 	var nu int
-	for _, v := range servers {
+	for _, v := range servers.cache {
 		var members []*discordgo.Member
 		var lastID string
 		for {
@@ -79,21 +92,33 @@ func HydrateUsers(d *discordgo.Session) (int, error) {
 }
 
 func GetUserByID(userID, guildID string) *entities.UserType {
-	return users[userID+"|"+guildID]
+	users.lock.RLock()
+	u := users.cache[userID+"|"+guildID]
+	users.lock.RUnlock()
+
+	return u
 }
 
-func UpsertUserByID(userID string, user *entities.UserType) {
+func ResetRanks() error {
+	for _, v := range users.cache {
+		v.CurrentLevel = 1
+		v.CurrentLevelExperience = 0
+	}
+	return nil
+}
+
+func UpsertUserByID(userID string, user *entities.UserType) error {
 	if Hydrated {
 		d, err := diff.NewDiffer(diff.TagName("bson"))
 		if err != nil {
-			panic(err)
+			return err
 		}
-		changelog, err := d.Diff(users[userID], user)
+		changelog, err := d.Diff(user, users.cache[userID])
 		if err != nil {
-			panic(err)
+			return err
 		}
 		if len(changelog) == 0 {
-			return
+			return err
 		}
 
 		changes := bson.D{}
@@ -115,9 +140,75 @@ func UpsertUserByID(userID string, user *entities.UserType) {
 		)
 
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
-	users[userID] = user
+	if !Hydrated {
+		users.lock.Lock()
+		users.cache[userID] = user
+		users.lock.Unlock()
+	}
+
+	return nil
+}
+
+func UpdateUser(userID string, user *entities.UserType) {
+	users.lock.Lock()
+	users.cache[userID] = user
+	users.writes++
+	users.lock.Unlock()
+}
+
+func GetCurrentLevelExperience(userId string) uint {
+	users.lock.RLock()
+	exp := users.cache[userId].CurrentLevelExperience
+	users.lock.RUnlock()
+
+	return exp
+}
+
+func UpdateAllUserInDb() error {
+	for k, v := range users.cache {
+		user := entities.UserType{}
+		res := USERS_DB.FindOne(context.TODO(), bson.M{"complexid": v.ComplexID})
+		res.Decode(&user)
+		err := UpsertUserByID(k, &user)
+		if err != nil {
+			return err
+		}
+	}
+	users.lock.Lock()
+	users.writes = 0
+	users.lock.Unlock()
+	return nil
+}
+
+func GetWrites() int {
+	users.lock.RLock()
+	writes := users.writes
+	users.lock.RUnlock()
+
+	return writes
+}
+
+func StartUsersDBUpdater() {
+	for {
+		if GetWrites() > 5 {
+			fmt.Println("updating db")
+			UpdateAllUserInDb()
+		}
+	}
+}
+
+func RetrieveUsersByServerID(serverID string) []entities.UserType {
+	var u []entities.UserType
+
+	for _, v := range users.cache {
+		if v.ServerID == serverID {
+			u = append(u, *v)
+		}
+	}
+
+	return u
 }
