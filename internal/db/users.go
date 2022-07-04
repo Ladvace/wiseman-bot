@@ -28,13 +28,9 @@ var users Users = Users{
 var USERS_DB *mongo.Collection
 
 func UpdateExpById(userID, guildID string, exp int) {
-	userStruct := users[userID+"|"+guildID]
+	userStruct := users.cache[userID+"|"+guildID]
 	userStruct.CurrentLevelExperience += uint(exp)
-	UpdateUser(userID, guildID, userStruct)
-}
-
-func UpdateUser(userId, guildId string, u *entities.UserType) {
-	users[userId+"|"+guildId] = u
+	UpdateUser(userID, userStruct)
 }
 
 func HydrateUsers(d *discordgo.Session) (int, error) {
@@ -208,7 +204,7 @@ func StartUsersDBUpdater() {
 func RetrieveUsersByServerID(serverID string) []entities.UserType {
 	var u []entities.UserType
 
-	for _, v := range users {
+	for _, v := range users.cache {
 		if v.ServerID == serverID {
 			u = append(u, *v)
 		}

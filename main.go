@@ -61,6 +61,7 @@ func main() {
 	commands.Init()
 
 	go db.StartUsersDBUpdater()
+	go db.StartServersDBUpdater()
 
 	// Start REST API
 	e := internal.StartEcho()
