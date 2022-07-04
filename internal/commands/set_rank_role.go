@@ -82,7 +82,7 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 
 	log.Println("new role created:", customRole)
 
-	err = db.UpdateRoleServer(m.GuildID, *customRole)
+	db.UpdateRoleServer(m.GuildID, *customRole)
 	if err != nil {
 		return err
 	}

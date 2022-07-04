@@ -55,10 +55,7 @@ func IncreaseExperience(u *entities.UserType, v uint, guildID string) uint {
 		}
 	}
 
-	// TODO: UpsertUserByID should load from the cache inside the database all data
-	// every n minutes (maybe with a cron or a goroutine?)
-	db.UpsertUserByID(user.ComplexID, &user)
-
+	db.UpdateUser(user.ComplexID, &user)
 	return user.CurrentLevelExperience
 }
 

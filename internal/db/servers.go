@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"sync"
 	"wiseman/internal/entities"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,11 +12,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var servers entities.ServersType
+// var servers entities.ServersType
 var SERVERS_DB *mongo.Collection
 
-func init() {
-	servers = make(map[string]*entities.ServerType, 1000)
+type Servers struct {
+	cache  map[string]*entities.ServerType
+	writes int
+	lock   sync.RWMutex
+}
+
+var servers Servers = Servers{
+	cache:  make(map[string]*entities.ServerType, 1000),
+	writes: 0,
 }
 
 func HydrateServers(d *discordgo.Session) (int, error) {
@@ -81,23 +89,36 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 }
 
 func GetServerByID(serverID string) *entities.ServerType {
-	return servers[serverID]
+	servers.lock.RLock()
+	s := servers.cache[serverID]
+	servers.lock.RUnlock()
+
+	return s
 }
 
 func UpsertServerByID(serverID string, server *entities.ServerType) {
-	servers[serverID] = server
+	servers.lock.Lock()
+	servers.cache[serverID] = server
+	servers.writes++
+	servers.lock.Unlock()
 }
 
 func GetCustomRanksByGuildId(guildId string) []entities.CustomRanks {
-	return servers[guildId].CustomRanks
+	servers.lock.Lock()
+	cr := servers.cache[guildId].CustomRanks
+	servers.lock.Unlock()
+
+	return cr
 }
 
-func UpdateRoleServer(serverID string, rank entities.CustomRanks) error {
+func UpdateRoleServer(serverID string, rank entities.CustomRanks) {
 
-	servers[serverID].CustomRanks = append(servers[serverID].CustomRanks, rank)
-	res := SERVERS_DB.FindOneAndUpdate(context.TODO(), bson.M{"serverid": serverID}, bson.M{"$set": bson.M{"customranks": servers[serverID].CustomRanks}})
-
-	return res.Err()
+	servers.lock.Lock()
+	servers.cache[serverID].CustomRanks = append(servers.cache[serverID].CustomRanks, rank)
+	servers.writes++
+	// res := SERVERS_DB.FindOneAndUpdate(context.TODO(), bson.M{"serverid": serverID}, bson.M{"$set": bson.M{"customranks": servers.cache[serverID].CustomRanks}})
+	servers.lock.Unlock()
+	// return res.Err()
 }
 
 func GetRankRoleByLevel(s entities.ServerType, level uint) entities.CustomRanks {
@@ -114,5 +135,45 @@ func GetRankRoleByLevel(s entities.ServerType, level uint) entities.CustomRanks 
 }
 
 func GetServerMultiplierByGuildId(guildId string) float64 {
-	return servers[guildId].MsgExpMultiplier
+	servers.lock.RLock()
+	mem := servers.cache[guildId].MsgExpMultiplier
+	servers.lock.RUnlock()
+
+	return mem
+
+}
+
+func GetServersWrites() int {
+	users.lock.RLock()
+	writes := users.writes
+	users.lock.RUnlock()
+
+	return writes
+}
+
+func StartServersDBUpdater() {
+	for {
+		if GetServersWrites() > 5 {
+			fmt.Println("updating server db")
+			UpdateAllServersInDb()
+		}
+	}
+}
+
+func UpdateServerByID(serverID string, server *entities.ServerType) {
+
+	filter := bson.M{"serverid": serverID}
+	replacement := bson.M{"$set": server}
+	SERVERS_DB.ReplaceOne(context.TODO(), filter, replacement)
+	SERVERS_DB.FindOneAndUpdate(context.TODO(), filter, bson.M{"$set": bson.M{"customranks": server.CustomRanks}})
+}
+
+func UpdateAllServersInDb() error {
+	for k, v := range servers.cache {
+		UpdateServerByID(k, v)
+	}
+	users.lock.Lock()
+	users.writes = 0
+	users.lock.Unlock()
+	return nil
 }
