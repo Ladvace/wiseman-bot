@@ -56,7 +56,7 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 	}
 
 	if min_xp > max_xp {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Min XP cannot be greater than Max XP"))
+		s.ChannelMessageSend(m.ChannelID, "Min XP cannot be greater than Max XP")
 		return errors.CreateInvalidArgumentError(args[1] + " must be less than " + args[2])
 	}
 
@@ -68,7 +68,7 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 
 	log.Println("new role created:", customRole)
 
-	err = db.UpdateRoleServer(m.GuildID, *customRole)
+	db.UpdateRoleServer(m.GuildID, *customRole)
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ var USERS_DB *mongo.Collection
 
 func HydrateUsers(d *discordgo.Session) (int, error) {
 	var nu int
-	for _, v := range servers {
+	for _, v := range servers.cache {
 		var members []*discordgo.Member
 		var lastID string
 		for {

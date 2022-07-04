@@ -34,7 +34,7 @@ func Setmultiplier(s *discordgo.Session, m *discordgo.MessageCreate, args []stri
 	multiplierType := strings.ToLower(args[0])
 	multiplier := args[1]
 
-	parsedMultiplied, err := strconv.ParseFloat(multiplier, 8)
+	parsedMultiplied, err := strconv.ParseFloat(multiplier, 32)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Not right paramater passed")
 		return nil

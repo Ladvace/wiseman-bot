@@ -20,7 +20,7 @@ func HydrateCrossLookup() {
 			serverUsers[s.UserID] = make([]*entities.UserType, 0)
 		}
 
-		userServers[s.UserID] = append(userServers[s.UserID], servers[s.ServerID])
+		userServers[s.UserID] = append(userServers[s.UserID], servers.cache[s.ServerID])
 		serverUsers[s.ServerID] = append(serverUsers[s.ServerID], s)
 
 	}
