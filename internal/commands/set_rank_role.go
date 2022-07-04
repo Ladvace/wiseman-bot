@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"wiseman/internal/db"
 	"wiseman/internal/entities"
@@ -30,8 +31,6 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 		return errors.CreateUnauthorizedUserError(m.Author.ID)
 	}
 
-	// ctx := context.TODO()
-	// rank_id min_xp max_xp
 	if len(args) != 3 {
 		if len(args) < 3 {
 			s.ChannelMessageSend(m.ChannelID, "Not enough arguments")
@@ -55,12 +54,27 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 		return errors.CreateInvalidArgumentError(args[2])
 	}
 
-	if min_xp > max_xp {
-		s.ChannelMessageSend(m.ChannelID, "Min XP cannot be greater than Max XP")
+	if min_xp >= max_xp {
+		s.ChannelMessageSend(m.ChannelID, "Min XP cannot be greater or equale to Max XP")
 		return errors.CreateInvalidArgumentError(args[1] + " must be less than " + args[2])
 	}
 
-	customRole := &entities.RoleType{
+	customRank := db.GetCustomRanksByGuildId(m.GuildID)
+	sort.Slice(customRank, func(i, j int) bool {
+		return customRank[i].MinLevel < customRank[j].MinLevel
+	})
+
+	for _, c := range customRank {
+		if (min_xp > int(c.MinLevel) && min_xp < int(c.MaxLevel)) ||
+			(max_xp > int(c.MinLevel) && max_xp < int(c.MaxLevel)) ||
+			(min_xp == int(c.MinLevel)) || (max_xp == int(c.MaxLevel)) {
+			s.ChannelMessageSend(m.ChannelID, "existing roles are:")
+			printRoles(customRank, s, m)
+			return errors.CreateInvalidArgumentError("New role overlaps with another existing")
+		}
+	}
+
+	customRole := &entities.CustomRanks{
 		Id:       rank_id,
 		MinLevel: uint(min_xp),
 		MaxLevel: uint(max_xp),
@@ -73,6 +87,7 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 		return err
 	}
 
+	services.UpdateUsersRoles(m.GuildID, *customRole)
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Role set from %d to %d level", min_xp, max_xp))
 
 	// now the role exists, what we need to do is add it to the server
@@ -80,4 +95,12 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 	// users who match this role to the new role
 
 	return nil
+}
+
+func printRoles(customRank []entities.CustomRanks, s *discordgo.Session, m *discordgo.MessageCreate) {
+	for _, c := range customRank {
+		min := strconv.Itoa(int(c.MinLevel))
+		max := strconv.Itoa(int(c.MaxLevel))
+		s.ChannelMessageSend(m.ChannelID, c.Id+": from "+min+" to "+max)
+	}
 }

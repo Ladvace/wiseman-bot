@@ -1,13 +1,11 @@
 package errors
 
-import "fmt"
-
 type DiscordError struct {
 	Message string
 }
 
 func (de DiscordError) Error() string {
-	return fmt.Sprintf("%s", de.Message)
+	return de.Message
 }
 
 func CreateUnauthorizedUserError(userId string) error {

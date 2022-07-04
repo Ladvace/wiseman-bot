@@ -73,7 +73,7 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 			ServerPrefix:        "!",
 			NotificationChannel: "",
 			WelcomeChannel:      "",
-			CustomRanks:         []entities.RoleType{},
+			CustomRanks:         []entities.CustomRanks{},
 			RankTime:            0,
 			MsgExpMultiplier:    1.00,
 			TimeExpMultiplier:   1.00,
@@ -121,14 +121,14 @@ func UpdateRoleServer(serverID string, rank entities.RoleType) {
 	// return res.Err()
 }
 
-func GetRankRoleByLevel(s entities.ServerType, level uint) entities.RoleType {
+func GetRankRoleByLevel(s entities.ServerType, level uint) entities.CustomRanks {
 	for _, v := range s.CustomRanks {
 		if level >= v.MinLevel {
 			return v
 		}
 	}
 
-	return entities.RoleType{
+	return entities.CustomRanks{
 		Id:       "",
 		MinLevel: 0,
 	}
