@@ -22,6 +22,9 @@ func init() {
 func printranks(s *discordgo.Session, m *discordgo.MessageCreate, args []string) error {
 
 	c := db.GetCustomRanksByGuildId(m.GuildID)
+	if len(c) == 0 {
+		s.ChannelMessageSend(m.ChannelID, "No available roles found")
+	}
 	for _, r := range c {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Available roles are:\nRole Id: %v - Role Min Level: %d - Role Max Level: %d", r.Id, r.MinLevel, r.MaxLevel))
 	}
