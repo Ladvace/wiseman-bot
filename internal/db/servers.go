@@ -26,6 +26,17 @@ var servers Servers = Servers{
 	writes: 0,
 }
 
+// StartServersDBUpdater updates the DB every
+// 5 writes on the cache layer
+func StartServersDBUpdater() {
+	for {
+		if GetServersWrites() > 5 {
+			fmt.Println("updating server db")
+			UpdateAllServersInDb()
+		}
+	}
+}
+
 func HydrateServers(d *discordgo.Session) (int, error) {
 	var ns int
 	var guilds []*discordgo.UserGuild
@@ -88,6 +99,11 @@ func HydrateServers(d *discordgo.Session) (int, error) {
 	return ns, nil
 }
 
+// Get methods
+
+// GetServerByID, given a serverID, returns
+// the entity ServerType related to that
+// serverID
 func GetServerByID(serverID string) *entities.ServerType {
 	servers.lock.RLock()
 	s := servers.cache[serverID]
@@ -96,13 +112,8 @@ func GetServerByID(serverID string) *entities.ServerType {
 	return s
 }
 
-func UpsertServerByID(serverID string, server *entities.ServerType) {
-	servers.lock.Lock()
-	servers.cache[serverID] = server
-	servers.writes++
-	servers.lock.Unlock()
-}
-
+// GetCustomRanksByGuildId, give a guildId, returns the
+// customRanks entity array related to that guildId
 func GetCustomRanksByGuildId(guildId string) []entities.CustomRanks {
 	servers.lock.Lock()
 	cr := servers.cache[guildId].CustomRanks
@@ -111,16 +122,8 @@ func GetCustomRanksByGuildId(guildId string) []entities.CustomRanks {
 	return cr
 }
 
-func UpdateRoleServer(serverID string, rank entities.CustomRanks) {
-
-	servers.lock.Lock()
-	servers.cache[serverID].CustomRanks = append(servers.cache[serverID].CustomRanks, rank)
-	servers.writes++
-	// res := SERVERS_DB.FindOneAndUpdate(context.TODO(), bson.M{"serverid": serverID}, bson.M{"$set": bson.M{"customranks": servers.cache[serverID].CustomRanks}})
-	servers.lock.Unlock()
-	// return res.Err()
-}
-
+// GetRankRoleByLevel, give the serverType and the level
+// returns the customRanks related to that server and that level
 func GetRankRoleByLevel(s entities.ServerType, level uint) entities.CustomRanks {
 	for _, v := range s.CustomRanks {
 		if level >= v.MinLevel {
@@ -134,6 +137,10 @@ func GetRankRoleByLevel(s entities.ServerType, level uint) entities.CustomRanks 
 	}
 }
 
+// GetServerMultiplierByGuildId, given a guildId
+// returns the float value related to the msgMultiplier
+// that is the multiplier for which every action
+// is multiplied for
 func GetServerMultiplierByGuildId(guildId string) float64 {
 	servers.lock.RLock()
 	mem := servers.cache[guildId].MsgExpMultiplier
@@ -143,6 +150,8 @@ func GetServerMultiplierByGuildId(guildId string) float64 {
 
 }
 
+// GetServersWrites returns the number of
+// writes in the cache
 func GetServersWrites() int {
 	users.lock.RLock()
 	writes := users.writes
@@ -151,15 +160,25 @@ func GetServersWrites() int {
 	return writes
 }
 
-func StartServersDBUpdater() {
-	for {
-		if GetServersWrites() > 5 {
-			fmt.Println("updating server db")
-			UpdateAllServersInDb()
-		}
-	}
+// Update methods
+// If the server exists, update it, otherwise insert it.
+func UpsertServerByID(serverID string, server *entities.ServerType) {
+	servers.lock.Lock()
+	servers.cache[serverID] = server
+	servers.writes++
+	servers.lock.Unlock()
 }
 
+// UpdateRoleServer takes a server ID and a custom rank,
+// and adds the custom rank to the server's custom ranks
+func UpdateRoleServer(serverID string, rank entities.CustomRanks) {
+	servers.lock.Lock()
+	servers.cache[serverID].CustomRanks = append(servers.cache[serverID].CustomRanks, rank)
+	servers.writes++
+	servers.lock.Unlock()
+}
+
+// UpdateServerByID updates a server in the database by its ID.
 func UpdateServerByID(serverID string, server *entities.ServerType) {
 
 	filter := bson.M{"serverid": serverID}
@@ -168,6 +187,7 @@ func UpdateServerByID(serverID string, server *entities.ServerType) {
 	SERVERS_DB.FindOneAndUpdate(context.TODO(), filter, bson.M{"$set": bson.M{"customranks": server.CustomRanks}})
 }
 
+// Update all servers in the cache to the database.
 func UpdateAllServersInDb() error {
 	for k, v := range servers.cache {
 		UpdateServerByID(k, v)
@@ -176,4 +196,20 @@ func UpdateAllServersInDb() error {
 	users.writes = 0
 	users.lock.Unlock()
 	return nil
+}
+
+// Delete methods
+// It takes a server ID and a role ID,
+// and removes the role from the server's custom ranks
+func DeleteRoleServer(serverID, roleId string) {
+	servers.lock.Lock()
+	s := servers.cache[serverID]
+	for i, c := range s.CustomRanks {
+		if c.Id == roleId {
+			s.CustomRanks = append(s.CustomRanks[:i], s.CustomRanks[i+1:]...)
+			servers.writes++
+			break
+		}
+	}
+	servers.lock.Unlock()
 }

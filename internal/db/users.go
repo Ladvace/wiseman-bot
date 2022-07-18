@@ -100,10 +100,12 @@ func GetUserByID(userID, guildID string) *entities.UserType {
 }
 
 func ResetRanks() error {
+	users.lock.Lock()
 	for _, v := range users.cache {
 		v.CurrentLevel = 1
 		v.CurrentLevelExperience = 0
 	}
+	users.lock.Unlock()
 	return nil
 }
 

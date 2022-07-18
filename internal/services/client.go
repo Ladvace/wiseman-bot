@@ -68,7 +68,7 @@ func SetRole(userId, serverId, roleId string) error {
 	return nil
 }
 
-func RemoveRole(userId, serverId, roleId, oldRoleId string) error {
+func RemoveRole(userId, serverId, oldRoleId string) error {
 
 	err := client.GuildMemberRoleRemove(serverId, userId, oldRoleId)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"wiseman/internal/db"
 	"wiseman/internal/entities"
+	"wiseman/internal/shared"
 
 	"github.com/labstack/gommon/log"
 )
@@ -41,7 +42,7 @@ func IncreaseExperience(u *entities.UserType, v uint, guildID string) uint {
 			if user.CurrentLevel >= v.MinLevel && user.CurrentLevel < v.MaxLevel {
 
 				if i > 0 {
-					err := RemoveRole(u.UserID, u.ServerID, v.Id, customRank[i-1].Id)
+					err := RemoveRole(u.UserID, u.ServerID, customRank[i-1].Id)
 					if err != nil {
 						log.Error("Error removing role", err)
 					}
@@ -59,14 +60,26 @@ func IncreaseExperience(u *entities.UserType, v uint, guildID string) uint {
 	return user.CurrentLevelExperience
 }
 
-func UpdateUsersRoles(serverID string, customRank entities.CustomRanks) {
+func UpdateUsersRoles(serverID string, op string, customRank entities.CustomRanks) {
 
 	users := db.RetrieveUsersByServerID(serverID)
-	for _, u := range users {
-		if !u.Bot {
-			if u.CurrentLevel >= customRank.MinLevel && u.CurrentLevel < customRank.MaxLevel {
-				err := SetRole(u.UserID, u.ServerID, customRank.Id)
-				fmt.Println("role set")
+	if op == shared.CREATE_OP {
+		for _, u := range users {
+			if !u.Bot {
+				if u.CurrentLevel >= customRank.MinLevel && u.CurrentLevel < customRank.MaxLevel {
+					err := SetRole(u.UserID, u.ServerID, customRank.Id)
+					fmt.Println("role set")
+					if err != nil {
+						continue
+					}
+				}
+			}
+		}
+	} else if op == shared.DELETE_OP {
+		for _, u := range users {
+			if !u.Bot {
+				err := RemoveRole(u.UserID, u.ServerID, customRank.Id)
+				fmt.Println("role removed")
 				if err != nil {
 					continue
 				}

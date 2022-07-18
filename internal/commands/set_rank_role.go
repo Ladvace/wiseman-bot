@@ -9,6 +9,7 @@ import (
 	"wiseman/internal/entities"
 	"wiseman/internal/errors"
 	"wiseman/internal/services"
+	"wiseman/internal/shared"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -34,10 +35,10 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 	if len(args) != 3 {
 		if len(args) < 3 {
 			s.ChannelMessageSend(m.ChannelID, "Not enough arguments")
-			return errors.CreateInvalidArgumentError(args[0])
+			return errors.CreateInvalidArgumentError("Not enough arguments")
 		} else if len(args) > 3 {
 			s.ChannelMessageSend(m.ChannelID, "Too many arguments")
-			return errors.CreateInvalidArgumentError(args[0])
+			return errors.CreateInvalidArgumentError("Not enough arguments")
 		}
 	}
 
@@ -87,7 +88,7 @@ func SetRank(s *discordgo.Session, m *discordgo.MessageCreate, args []string) er
 		return err
 	}
 
-	services.UpdateUsersRoles(m.GuildID, *customRole)
+	services.UpdateUsersRoles(m.GuildID, shared.CREATE_OP, *customRole)
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Role set from %d to %d level", min_xp, max_xp))
 
 	// now the role exists, what we need to do is add it to the server
